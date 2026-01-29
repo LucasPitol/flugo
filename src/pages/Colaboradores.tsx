@@ -12,17 +12,26 @@ import {
   Paper,
   Chip,
   TableSortLabel,
+  Skeleton,
+  Avatar,
 } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
 import { listarColaboradores } from '../services/colaboradoresService';
 import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 
+const SKELETON_ROWS = 6;
+
 export function Colaboradores() {
   const navigate = useNavigate();
   const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listarColaboradores().then(setColaboradores);
+    setLoading(true);
+    listarColaboradores()
+      .then(setColaboradores)
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -168,7 +177,33 @@ export function Colaboradores() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {colaboradores.length === 0 ? (
+              {loading ? (
+                Array.from({ length: SKELETON_ROWS }).map((_, index) => (
+                  <TableRow
+                    key={index}
+                    sx={{
+                      bgcolor: '#fff',
+                      '&:not(:last-child)': { borderBottom: 'none' },
+                    }}
+                  >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Skeleton variant="circular" width={36} height={36} />
+                        <Skeleton variant="text" width="60%" sx={{ fontSize: '0.875rem' }} />
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Skeleton variant="text" width="75%" sx={{ fontSize: '0.875rem' }} />
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Skeleton variant="text" width="40%" sx={{ fontSize: '0.875rem' }} />
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Skeleton variant="rounded" width={64} height={24} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : colaboradores.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} sx={{ py: 6, textAlign: 'center', borderBottom: 'none' }}>
                     <Typography sx={{ color: '#888', fontSize: '0.9375rem', mb: 1 }}>
@@ -189,9 +224,21 @@ export function Colaboradores() {
                     }}
                   >
                     <TableCell sx={{ py: 2, color: '#555' }}>
-                      <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
-                        {row.nome}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            bgcolor: '#E8F5E9',
+                            color: '#2ECC71',
+                          }}
+                        >
+                          <PersonIcon sx={{ fontSize: 20 }} />
+                        </Avatar>
+                        <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
+                          {row.nome}
+                        </Typography>
+                      </Box>
                     </TableCell>
                     <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
                       {row.email}
