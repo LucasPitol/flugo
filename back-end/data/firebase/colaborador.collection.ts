@@ -23,8 +23,15 @@ type ColaboradorFirestore = {
   status: StatusColaborador;
 };
 
-const firestore = getFirestore(firebaseApp);
-const colaboradoresRef = collection(firestore, COLLECTION_NAME);
+function getColaboradoresRef() {
+  if (!firebaseApp) {
+    throw new RepositoryError(
+      'Firebase não configurado. Configure as variáveis de ambiente (VITE_FIREBASE_*) no painel da Vercel.'
+    );
+  }
+  const firestore = getFirestore(firebaseApp);
+  return collection(firestore, COLLECTION_NAME);
+}
 
 function docToDTO(id: string, data: ColaboradorFirestore): ColaboradorDTO {
   return {
@@ -50,6 +57,7 @@ function assertColaboradorFirestore(data: unknown): data is ColaboradorFirestore
 export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
   async listar(): Promise<ColaboradorDTO[]> {
     try {
+      const colaboradoresRef = getColaboradoresRef();
       const snapshot = await getDocs(colaboradoresRef);
       return snapshot.docs.map((doc) => {
         const data = doc.data();
@@ -68,6 +76,7 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
 
   async criar(dto: CriarColaboradorDTO): Promise<ColaboradorDTO> {
     try {
+      const colaboradoresRef = getColaboradoresRef();
       const payload: ColaboradorFirestore = {
         nome: dto.nome,
         email: dto.email,

@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, type FirebaseApp } from 'firebase/app'
 
 // No Vite, só variáveis com prefixo VITE_ são expostas ao frontend
 const env = import.meta.env
@@ -11,4 +11,12 @@ export const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID ?? env.FIREBASE_APP_ID,
 }
 
-export const firebaseApp = initializeApp(firebaseConfig)
+// Não dispara erro na carga do módulo: evita tela preta / loading infinito quando
+// as variáveis de ambiente não estão configuradas (ex.: Vercel sem env).
+let app: FirebaseApp | null = null
+try {
+  app = initializeApp(firebaseConfig)
+} catch {
+  app = null
+}
+export const firebaseApp = app
