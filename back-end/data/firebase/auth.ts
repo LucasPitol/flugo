@@ -1,5 +1,6 @@
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
 } from 'firebase/auth';
@@ -22,6 +23,16 @@ export class AuthRepositoryFirebase implements AuthRepository {
     } catch (e) {
       if (e instanceof AuthError) throw e;
       throw new AuthError('Erro ao autenticar', e);
+    }
+  }
+
+  async signUp(email: string, password: string): Promise<AuthUser> {
+    try {
+      const cred = await createUserWithEmailAndPassword(this.auth, email, password);
+      return userToAuthUser(cred.user);
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      throw new AuthError('Erro ao criar conta', e);
     }
   }
 

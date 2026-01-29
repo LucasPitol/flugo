@@ -2,6 +2,7 @@ import { Component, lazy, Suspense } from 'react';
 import { ThemeProvider, CssBaseline, Box, CircularProgress, Typography, Button } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { theme } from './theme';
+import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { Colaboradores } from './pages/Colaboradores';
 
@@ -63,17 +64,19 @@ function App() {
     <AppErrorBoundary>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <BrowserRouter>
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="/colaboradores" replace />} />
-                <Route path="colaboradores" element={<Colaboradores />} />
-                <Route path="colaboradores/novo" element={<NovoColaborador />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/colaboradores" replace />} />
+                  <Route path="colaboradores" element={<Colaboradores />} />
+                  <Route path="colaboradores/novo" element={<NovoColaborador />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     </AppErrorBoundary>
   );

@@ -4,6 +4,7 @@ import { authRepositoryFirebase } from '../data/firebase/auth';
 
 export interface AuthGateway {
   signIn(email: string, password: string): Promise<AuthUser>;
+  signUp(email: string, password: string): Promise<AuthUser>;
   signOut(): Promise<void>;
   getCurrentUser(): AuthUser | null;
   onAuthStateChanged(callback: (user: AuthUser | null) => void): () => void;
@@ -14,6 +15,10 @@ class AuthGatewayImpl implements AuthGateway {
 
   async signIn(email: string, password: string): Promise<AuthUser> {
     return this.repository.signIn(email, password);
+  }
+
+  async signUp(email: string, password: string): Promise<AuthUser> {
+    return this.repository.signUp(email, password);
   }
 
   async signOut(): Promise<void> {
