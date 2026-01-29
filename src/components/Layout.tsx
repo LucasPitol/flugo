@@ -1,5 +1,4 @@
 import { Box, Typography } from '@mui/material';
-import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import PeopleOutlineRoundedIcon from '@mui/icons-material/PeopleOutlineRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { Outlet } from 'react-router-dom';
@@ -24,21 +23,15 @@ export function Layout() {
         {/* Logo Flugo */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, px: 1 }}>
           <Box
+            component="img"
+            src="/logo2.png"
+            alt="Flugo"
             sx={{
-              width: 32,
               height: 32,
-              borderRadius: 1,
-              bgcolor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: 'auto',
+              objectFit: 'contain',
             }}
-          >
-            <SendRoundedIcon sx={{ color: '#fff', fontSize: 20 }} />
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#374151' }}>
-            Flugo
-          </Typography>
+          />
         </Box>
 
         {/* Nav: Colaboradores (ativo) */}
