@@ -7,17 +7,18 @@ import { colors, typography, borderRadius, shadows } from '../theme';
 import { AppButton, AppSnackbar } from '../components/ui';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
-function toLoginErrorMessage(err: unknown): string {
+function toCadastroErrorMessage(err: unknown): string {
   if (err instanceof AuthError && err.cause && typeof err.cause === 'object' && 'code' in err.cause) {
     const code = (err.cause as { code?: string }).code;
     switch (code) {
-      case 'auth/invalid-credential':
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        return 'E-mail ou senha incorretos.';
+      case 'auth/email-already-in-use':
+        return 'E-mail já cadastrado. Use outro e-mail ou faça login.';
       case 'auth/invalid-email':
         return 'E-mail inválido.';
+      case 'auth/weak-password':
+        return 'Senha deve ter no mínimo 8 caracteres.';
       case 'auth/too-many-requests':
         return 'Muitas tentativas. Tente novamente mais tarde.';
       case 'auth/network-request-failed':
@@ -26,24 +27,33 @@ function toLoginErrorMessage(err: unknown): string {
   }
   if (err instanceof AuthError && err.message) return err.message;
   if (err instanceof Error && err.message) return err.message;
-  return 'Não foi possível entrar. Tente novamente.';
+  return 'Não foi possível criar a conta. Tente novamente.';
 }
 
-export function Login() {
+export function Cadastro() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   const validate = (): boolean => {
-    const next: { email?: string; password?: string } = {};
+    const next: { email?: string; password?: string; confirmPassword?: string } = {};
     if (!email.trim()) next.email = 'E-mail é obrigatório';
     else if (!EMAIL_REGEX.test(email.trim())) next.email = 'E-mail inválido';
     if (!password) next.password = 'Senha é obrigatória';
+    else if (password.length < MIN_PASSWORD_LENGTH)
+      next.password = `Senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`;
+    if (!confirmPassword) next.confirmPassword = 'Confirme a senha.';
+    else if (password !== confirmPassword) next.confirmPassword = 'As senhas devem ser iguais.';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -53,10 +63,10 @@ export function Login() {
     if (!validate()) return;
     setSubmitting(true);
     setErrors({});
-    login(email.trim(), password)
+    register(email.trim(), password)
       .then(() => navigate('/colaboradores', { replace: true }))
       .catch((err) => {
-        setToastMessage(toLoginErrorMessage(err));
+        setToastMessage(toCadastroErrorMessage(err));
         setToastOpen(true);
       })
       .finally(() => setSubmitting(false));
@@ -100,13 +110,13 @@ export function Login() {
               fontSize: typography.fontSize['2xl'],
             }}
           >
-            Entrar
+            Cadastro
           </Typography>
           <Typography
             variant="body2"
             sx={{ color: colors.neutral.textMuted, mt: 0.5 }}
           >
-            Use seu e-mail e senha para acessar.
+            Crie sua conta com e-mail e senha.
           </Typography>
         </Box>
 
@@ -131,15 +141,41 @@ export function Login() {
           type="password"
           value={password}
           onChange={(e) => {
-            setPassword(e.target.value);
+            const v = e.target.value;
+            setPassword(v);
             if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+            setErrors((prev) => ({
+              ...prev,
+              confirmPassword:
+                confirmPassword && v !== confirmPassword ? 'As senhas devem ser iguais.' : undefined,
+            }));
           }}
           fullWidth
           variant="outlined"
           required
           error={!!errors.password}
           helperText={errors.password}
-          autoComplete="current-password"
+          autoComplete="new-password"
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          label="Confirme a senha"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => {
+            const v = e.target.value;
+            setConfirmPassword(v);
+            setErrors((prev) => ({
+              ...prev,
+              confirmPassword: v && v !== password ? 'As senhas devem ser iguais.' : undefined,
+            }));
+          }}
+          fullWidth
+          variant="outlined"
+          required
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword}
+          autoComplete="new-password"
           sx={{ mb: 3 }}
         />
 
@@ -150,14 +186,14 @@ export function Login() {
           loading={submitting}
           sx={{ py: 1.5, mb: 2 }}
         >
-          Entrar
+          Criar conta
         </AppButton>
 
         <Typography variant="body2" sx={{ textAlign: 'center', color: colors.neutral.textMuted }}>
-          Não tem conta?{' '}
+          Já tem conta?{' '}
           <Link
             component={RouterLink}
-            to="/cadastro"
+            to="/login"
             sx={{
               color: colors.primary.main,
               fontWeight: typography.fontWeight.medium,
@@ -165,7 +201,7 @@ export function Login() {
               '&:hover': { textDecoration: 'underline' },
             }}
           >
-            Cadastre-se
+            Entrar
           </Link>
         </Typography>
       </Box>
