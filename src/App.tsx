@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Colaboradores } from './pages/Colaboradores';
 import { Login } from './pages/Login';
 import { Cadastro } from './pages/Cadastro';
+import { NotFound } from './pages/NotFound';
 
 const NovoColaborador = lazy(() =>
   import('./pages/NovoColaborador').then((m) => ({ default: m.NovoColaborador }))
@@ -83,6 +84,10 @@ function App() {
                     <Route path="colaboradores/novo" element={<NovoColaborador />} />
                   </Route>
                 </Route>
+
+                {/* 404 — catch-all */}
+                <Route path="/404" element={<NotFound />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </BrowserRouter>
