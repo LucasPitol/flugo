@@ -13,6 +13,7 @@ import {
   Chip,
   TableSortLabel,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 const colaboradores = [
   {
     id: '1',
@@ -49,6 +50,8 @@ const colaboradores = [
 ];
 
 export function Colaboradores() {
+  const navigate = useNavigate();
+
   return (
     <Box sx={{ maxWidth: 1200 }}>
       {/* Header: título + botão — guia do print */}
@@ -72,6 +75,7 @@ export function Colaboradores() {
         </Typography>
         <Button
           variant="contained"
+          onClick={() => navigate('/colaboradores/novo')}
           sx={{
             bgcolor: '#2ECC71',
             color: '#fff',

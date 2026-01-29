@@ -2,15 +2,11 @@ import { Box, Typography } from '@mui/material';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import PeopleOutlineRoundedIcon from '@mui/icons-material/PeopleOutlineRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import { ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
 
 const SIDEBAR_WIDTH = 260;
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export function Layout({ children }: LayoutProps) {
+export function Layout() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
       {/* Sidebar */}
@@ -91,7 +87,9 @@ export function Layout({ children }: LayoutProps) {
         </Box>
 
         {/* Page content */}
-        <Box sx={{ flex: 1, p: 3, bgcolor: '#fff' }}>{children}</Box>
+        <Box sx={{ flex: 1, p: 3, bgcolor: '#fff' }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );
