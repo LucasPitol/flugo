@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { criarColaborador } from '../services/colaboradoresService';
+import type { CriarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 import {
   Box,
   Typography,
@@ -14,6 +15,7 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +27,16 @@ const STEPS = [
 const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CREATE_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(message)), ms)
+    ),
+  ]);
+}
 
 export function NovoColaborador() {
   const navigate = useNavigate();
@@ -33,6 +45,7 @@ export function NovoColaborador() {
   const [emailColaborador, setEmailColaborador] = useState('');
   const [ativarAoCriar, setAtivarAoCriar] = useState(true);
   const [departamentoColaborador, setDepartamentoColaborador] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
     nome?: string;
     email?: string;
@@ -68,14 +81,27 @@ export function NovoColaborador() {
     if (activeStep < STEPS.length - 1) {
       setActiveStep((prev) => prev + 1);
     } else {
-      criarColaborador({
+      const dto: CriarColaboradorDTO = {
         nome: nomeColaborador.trim(),
         email: emailColaborador.trim(),
         departamento: departamentoColaborador,
         status: ativarAoCriar ? 'Ativo' : 'Inativo',
-      })
+      };
+      setSubmitting(true);
+      setErrors((prev) => ({ ...prev, submit: undefined }));
+      withTimeout(
+        criarColaborador(dto),
+        CREATE_TIMEOUT_MS,
+        'Timeout ao salvar. Verifique a conexão e as variáveis VITE_FIREBASE_* no .env.'
+      )
         .then(() => navigate('/colaboradores'))
-        .catch(() => setErrors((prev) => ({ ...prev, submit: 'Erro ao cadastrar. Tente novamente.' })));
+        .catch((err: Error) =>
+          setErrors((prev) => ({
+            ...prev,
+            submit: err?.message ?? 'Erro ao cadastrar. Tente novamente.',
+          }))
+        )
+        .finally(() => setSubmitting(false));
     }
   };
 
@@ -305,6 +331,7 @@ export function NovoColaborador() {
         <Button
           variant="contained"
           onClick={handleNext}
+          disabled={submitting}
           sx={{
             bgcolor: 'primary.main',
             color: '#fff',
@@ -320,7 +347,16 @@ export function NovoColaborador() {
             },
           }}
         >
-          {activeStep === STEPS.length - 1 ? 'Concluir' : 'Próximo'}
+          {submitting ? (
+            <>
+              <CircularProgress size={20} sx={{ color: 'inherit', mr: 1 }} />
+              Salvando...
+            </>
+          ) : activeStep === STEPS.length - 1 ? (
+            'Criar colaborador'
+          ) : (
+            'Próximo'
+          )}
         </Button>
         </Box>
       </Box>
