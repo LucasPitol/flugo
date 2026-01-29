@@ -10,15 +10,14 @@ import {
   TextField,
   FormControlLabel,
   Switch,
-  Button,
   Select,
   FormControl,
   InputLabel,
   MenuItem,
-  CircularProgress,
-  Snackbar,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { colors, typography, states } from '../theme';
+import { AppButton, AppSnackbar } from '../components/ui';
 
 const STEPS = [
   { label: 'Infos Básicas', title: 'Informações Básicas' },
@@ -96,25 +95,23 @@ export function NovoColaborador() {
 
   return (
     <Box sx={{ maxWidth: 900 }}>
-      {/* Breadcrumbs */}
       <Breadcrumbs
         separator="•"
-        sx={{ mb: 1.5, '& .MuiBreadcrumbs-separator': { color: '#9ca3af', mx: 0.5 } }}
+        sx={{ mb: 1.5, '& .MuiBreadcrumbs-separator': { color: colors.neutral.textMuted, mx: 0.5 } }}
       >
         <Link
           component="button"
           variant="body2"
-          sx={{ color: '#6b7280', cursor: 'pointer', textDecoration: 'none' }}
+          sx={{ color: colors.secondary.main, cursor: 'pointer', textDecoration: 'none' }}
           onClick={() => navigate('/colaboradores')}
         >
           Colaboradores
         </Link>
-        <Typography variant="body2" color="text.secondary" sx={{ color: '#9ca3af' }}>
+        <Typography variant="body2" sx={{ color: colors.neutral.textMuted }}>
           Cadastrar Colaborador
         </Typography>
       </Breadcrumbs>
 
-      {/* Progress bar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
         <LinearProgress
           variant="determinate"
@@ -123,16 +120,15 @@ export function NovoColaborador() {
             flex: 1,
             height: 6,
             borderRadius: 1,
-            bgcolor: '#e5e7eb',
+            bgcolor: colors.neutral.border,
             '& .MuiLinearProgress-bar': { bgcolor: 'primary.main' },
           }}
         />
-        <Typography variant="body2" sx={{ color: '#6b7280', minWidth: 36 }}>
+        <Typography variant="body2" sx={{ color: colors.secondary.main, minWidth: 36 }}>
           {Math.round(progress)}%
         </Typography>
       </Box>
 
-      {/* Stepper conforme proposta: círculo verde (ativo) / cinza claro (inativo), linha fina cinza, labels sem número */}
       <Box sx={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
         <Box sx={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           {STEPS.map((step, index) => {
@@ -146,7 +142,7 @@ export function NovoColaborador() {
                     sx={{
                       width: 2,
                       height: 24,
-                      bgcolor: '#e5e7eb',
+                      bgcolor: colors.neutral.border,
                       ml: '13px',
                       mb: -0.5,
                     }}
@@ -158,13 +154,13 @@ export function NovoColaborador() {
                       width: 28,
                       height: 28,
                       borderRadius: '50%',
-                      bgcolor: isActiveOrCompleted ? 'primary.main' : '#e5e7eb',
-                      color: isActiveOrCompleted ? '#fff' : '#9e9e9e',
+                      bgcolor: isActiveOrCompleted ? 'primary.main' : colors.neutral.border,
+                      color: isActiveOrCompleted ? colors.primary.contrast : colors.neutral.textDisabled,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
+                      fontWeight: typography.fontWeight.semibold,
+                      fontSize: typography.fontSize.sm,
                       flexShrink: 0,
                     }}
                   >
@@ -173,9 +169,9 @@ export function NovoColaborador() {
                   <Typography
                     sx={{
                       ml: 1.5,
-                      color: isActiveOrCompleted ? '#374151' : '#9e9e9e',
-                      fontWeight: isActive ? 600 : 400,
-                      fontSize: '0.875rem',
+                      color: isActiveOrCompleted ? colors.neutral.text : colors.neutral.textDisabled,
+                      fontWeight: isActive ? typography.fontWeight.semibold : typography.fontWeight.regular,
+                      fontSize: typography.fontSize.sm,
                     }}
                   >
                     {step.label}
@@ -186,12 +182,8 @@ export function NovoColaborador() {
           })}
         </Box>
 
-        {/* Conteúdo da etapa ativa */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: 700, color: '#374151', mb: 3 }}
-          >
+          <Typography variant="h5" sx={{ mb: 3 }}>
             {STEPS[activeStep].title}
           </Typography>
 
@@ -209,11 +201,6 @@ export function NovoColaborador() {
                 required
                 error={!!errors.nome}
                 helperText={errors.nome}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: 2 },
-                  },
-                }}
               />
               <TextField
                 label="E-mail"
@@ -235,16 +222,10 @@ export function NovoColaborador() {
                   <Switch
                     checked={ativarAoCriar}
                     onChange={(e) => setAtivarAoCriar(e.target.checked)}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': { color: 'primary.main' },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        bgcolor: 'primary.main',
-                      },
-                    }}
                   />
                 }
                 label="Ativar ao criar"
-                sx={{ '& .MuiFormControlLabel-label': { color: '#374151' } }}
+                sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
               />
             </Box>
           )}
@@ -271,8 +252,8 @@ export function NovoColaborador() {
                 displayEmpty
                 renderValue={(selected) => (selected as string) || 'Selecione um departamento'}
                 sx={{
-                  bgcolor: '#f9fafb',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  bgcolor: states.input.backgroundMuted,
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: states.input.borderDefault },
                 }}
               >
                 {DEPARTAMENTOS.map((d) => (
@@ -291,59 +272,25 @@ export function NovoColaborador() {
         </Box>
       </Box>
 
-      {/* Botões de navegação */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, mt: 4 }}>
         <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button
-          onClick={handleBack}
-          sx={{
-            color: '#6b7280',
-            textTransform: 'none',
-            fontWeight: 600,
-          }}
-        >
-          Voltar
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleNext}
-          disabled={submitting}
-          sx={{
-            bgcolor: 'primary.main',
-            color: '#fff',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 2.5,
-            py: 1.25,
-            borderRadius: 1.5,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            '&:hover': {
-              bgcolor: 'primary.dark',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-            },
-          }}
-        >
-          {submitting ? (
-            <>
-              <CircularProgress size={20} sx={{ color: 'inherit', mr: 1 }} />
-              Salvando...
-            </>
-          ) : activeStep === STEPS.length - 1 ? (
-            'Criar colaborador'
-          ) : (
-            'Próximo'
-          )}
-        </Button>
+          <AppButton variant="text" onClick={handleBack}>
+            Voltar
+          </AppButton>
+          <AppButton
+            variant="contained"
+            onClick={handleNext}
+            loading={submitting}
+          >
+            {activeStep === STEPS.length - 1 ? 'Criar colaborador' : 'Próximo'}
+          </AppButton>
         </Box>
       </Box>
 
-      <Snackbar
+      <AppSnackbar
         open={toastOpen}
-        autoHideDuration={6000}
         onClose={() => setToastOpen(false)}
         message="Não foi possível salvar o colaborador. Tente novamente."
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        sx={{ '& .MuiSnackbar-root': { bottom: 24, right: 24 } }}
       />
     </Box>
   );

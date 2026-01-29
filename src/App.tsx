@@ -38,17 +38,17 @@ class AppErrorBoundary extends Component<
             alignItems: 'center',
             justifyContent: 'center',
             p: 3,
-            bgcolor: '#fff',
-            color: '#333',
+            bgcolor: 'background.default',
+            color: 'text.primary',
           }}
         >
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
             Algo deu errado
           </Typography>
-          <Typography sx={{ mb: 2, color: '#666', textAlign: 'center' }}>
+          <Typography sx={{ mb: 2, color: 'text.secondary', textAlign: 'center' }}>
             {this.state.error?.message ?? 'Erro inesperado'}
           </Typography>
-          <Button variant="contained" onClick={() => window.location.reload()} sx={{ bgcolor: '#2ECC71' }}>
+          <Button variant="contained" onClick={() => window.location.reload()}>
             Recarregar
           </Button>
         </Box>
