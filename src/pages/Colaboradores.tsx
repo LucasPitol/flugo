@@ -168,41 +168,54 @@ export function Colaboradores() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {colaboradores.map((row) => (
-                <TableRow
-                  key={row.id}
-                  sx={{
-                    bgcolor: '#fff',
-                    '&:not(:last-child)': { borderBottom: 'none' },
-                  }}
-                >
-                  <TableCell sx={{ py: 2, color: '#555' }}>
-                    <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
-                      {row.nome}
+              {colaboradores.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ py: 6, textAlign: 'center', borderBottom: 'none' }}>
+                    <Typography sx={{ color: '#888', fontSize: '0.9375rem', mb: 1 }}>
+                      Nenhum colaborador cadastrado.
+                    </Typography>
+                    <Typography sx={{ color: '#999', fontSize: '0.875rem' }}>
+                      Clique em &quot;Novo Colaborador&quot; para adicionar o primeiro.
                     </Typography>
                   </TableCell>
-                  <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
-                    {row.email}
-                  </TableCell>
-                  <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
-                    {row.departamento}
-                  </TableCell>
-                  <TableCell sx={{ py: 2 }}>
-                    <Chip
-                      label={row.status}
-                      size="small"
-                      sx={{
-                        bgcolor: row.status === 'Ativo' ? '#E6F7ED' : '#FEEEEE',
-                        color: row.status === 'Ativo' ? '#2ECC71' : '#E74C3C',
-                        fontWeight: 500,
-                        borderRadius: 1.5,
-                        border: 'none',
-                        '& .MuiChip-label': { px: 1.25 },
-                      }}
-                    />
-                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                colaboradores.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    sx={{
+                      bgcolor: '#fff',
+                      '&:not(:last-child)': { borderBottom: 'none' },
+                    }}
+                  >
+                    <TableCell sx={{ py: 2, color: '#555' }}>
+                      <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
+                        {row.nome}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
+                      {row.email}
+                    </TableCell>
+                    <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
+                      {row.departamento}
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Chip
+                        label={row.status}
+                        size="small"
+                        sx={{
+                          bgcolor: row.status === 'Ativo' ? '#E6F7ED' : '#FEEEEE',
+                          color: row.status === 'Ativo' ? '#2ECC71' : '#E74C3C',
+                          fontWeight: 500,
+                          borderRadius: 1.5,
+                          border: 'none',
+                          '& .MuiChip-label': { px: 1.25 },
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
