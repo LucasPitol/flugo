@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -23,11 +23,38 @@ import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO'
 
 const SKELETON_ROWS = 6;
 
+type OrderByKey = 'nome' | 'email' | 'departamento' | 'status';
+
+function compare(a: ColaboradorDTO, b: ColaboradorDTO, orderBy: OrderByKey): number {
+  const va = a[orderBy];
+  const vb = b[orderBy];
+  if (va < vb) return -1;
+  if (va > vb) return 1;
+  return 0;
+}
+
 export function Colaboradores() {
   const navigate = useNavigate();
   const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastOpen, setToastOpen] = useState(false);
+  const [orderBy, setOrderBy] = useState<OrderByKey>('nome');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleRequestSort = useCallback((key: OrderByKey) => {
+    const isAsc = orderBy === key && order === 'asc';
+    setOrderBy(key);
+    setOrder(isAsc ? 'desc' : 'asc');
+  }, [orderBy, order]);
+
+  const sortedColaboradores = useMemo(() => {
+    const arr = [...colaboradores];
+    arr.sort((a, b) => {
+      const cmp = compare(a, b, orderBy);
+      return order === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [colaboradores, orderBy, order]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -126,8 +153,9 @@ export function Colaboradores() {
                   }}
                 >
                   <TableSortLabel
-                    active
-                    direction="desc"
+                    active={orderBy === 'nome'}
+                    direction={orderBy === 'nome' ? order : 'asc'}
+                    onClick={() => handleRequestSort('nome')}
                     sx={{
                       fontWeight: 500,
                       color: '#555',
@@ -147,8 +175,9 @@ export function Colaboradores() {
                   }}
                 >
                   <TableSortLabel
-                    active
-                    direction="desc"
+                    active={orderBy === 'email'}
+                    direction={orderBy === 'email' ? order : 'asc'}
+                    onClick={() => handleRequestSort('email')}
                     sx={{
                       fontWeight: 500,
                       color: '#555',
@@ -168,8 +197,9 @@ export function Colaboradores() {
                   }}
                 >
                   <TableSortLabel
-                    active
-                    direction="desc"
+                    active={orderBy === 'departamento'}
+                    direction={orderBy === 'departamento' ? order : 'asc'}
+                    onClick={() => handleRequestSort('departamento')}
                     sx={{
                       fontWeight: 500,
                       color: '#555',
@@ -189,8 +219,9 @@ export function Colaboradores() {
                   }}
                 >
                   <TableSortLabel
-                    active
-                    direction="desc"
+                    active={orderBy === 'status'}
+                    direction={orderBy === 'status' ? order : 'asc'}
+                    onClick={() => handleRequestSort('status')}
                     sx={{
                       fontWeight: 500,
                       color: '#555',
@@ -241,7 +272,7 @@ export function Colaboradores() {
                   </TableCell>
                 </TableRow>
               ) : (
-                colaboradores.map((row) => (
+                sortedColaboradores.map((row) => (
                   <TableRow
                     key={row.id}
                     sx={{
