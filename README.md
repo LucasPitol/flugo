@@ -74,8 +74,10 @@ flugo/
 ├── back-end/
 │   ├── data/
 │   │   ├── errors/
+│   │   │   ├── AuthError.ts
 │   │   │   └── RepositoryError.ts
 │   │   ├── firebase/
+│   │   │   ├── auth.ts                     # Repo Firebase Auth
 │   │   │   ├── colaborador.collection.ts   # Repo Firestore
 │   │   │   └── config.ts                   # Init Firebase
 │   │   └── mocks/
@@ -84,10 +86,13 @@ flugo/
 │   │   ├── entities/
 │   │   │   └── Colaborador.ts
 │   │   ├── repositories/
+│   │   │   ├── AuthRepository.ts
 │   │   │   └── ColaboradorRepository.ts
 │   │   └── types/
+│   │       ├── AuthTypes.ts
 │   │       └── ColaboradorDTO.ts
 │   └── interface/
+│       ├── AuthGateway.ts            # Gateway auth (Firebase Auth)
 │       └── ColaboradoresGateway.ts   # Gateway (usa repositório)
 ├── index.html
 ├── package.json
@@ -98,7 +103,7 @@ flugo/
 └── .env                         # Variáveis Firebase (não versionar)
 ```
 
-O front chama `colaboradoresService`, que usa `ColaboradoresGateway`; o gateway delega ao `ColaboradorRepository` (implementação Firestore em `colaborador.collection`).
+O front chama `colaboradoresService`, que usa `ColaboradoresGateway`; o gateway delega ao `ColaboradorRepository` (implementação Firestore em `colaborador.collection`). O `AuthGateway` expõe `signIn`, `signOut`, `getCurrentUser` e `onAuthStateChanged`, delegando ao `AuthRepository` (implementação Firebase Auth em `data/firebase/auth`).
 
 ## Deploy (Vercel)
 
