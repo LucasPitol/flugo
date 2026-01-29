@@ -14,12 +14,11 @@ import {
   TableSortLabel,
   Skeleton,
   Avatar,
-  Alert,
+  Snackbar,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
-import { listarColaboradores, toUserMessage } from '../services/colaboradoresService';
+import { listarColaboradores } from '../services/colaboradoresService';
 import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 
 const SKELETON_ROWS = 6;
@@ -28,19 +27,17 @@ export function Colaboradores() {
   const navigate = useNavigate();
   const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
 
   const load = useCallback(() => {
-    setError(null);
     setLoading(true);
     listarColaboradores()
       .then((data) => {
         setColaboradores(data);
-        setError(null);
       })
-      .catch((err) => {
+      .catch(() => {
         setColaboradores([]);
-        setError(toUserMessage(err));
+        setToastOpen(true);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -92,26 +89,19 @@ export function Colaboradores() {
         </Button>
       </Box>
 
-      {error && (
-        <Alert
-          severity="error"
-          onClose={() => setError(null)}
-          sx={{ mb: 2 }}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              startIcon={<RefreshIcon />}
-              onClick={load}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Tentar novamente
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      )}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={() => setToastOpen(false)}
+        message="Não foi possível carregar os colaboradores. Tente novamente."
+        action={
+          <Button color="inherit" size="small" onClick={() => { load(); setToastOpen(false); }} sx={{ textTransform: 'none' }}>
+            Tentar novamente
+          </Button>
+        }
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{ '& .MuiSnackbar-root': { bottom: 24, right: 24 } }}
+      />
 
       {/* Card da tabela */}
       <Paper

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { criarColaborador, toUserMessage } from '../services/colaboradoresService';
+import { criarColaborador } from '../services/colaboradoresService';
 import type { CriarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 import {
   Box,
@@ -16,6 +16,7 @@ import {
   InputLabel,
   MenuItem,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -40,8 +41,8 @@ export function NovoColaborador() {
     nome?: string;
     email?: string;
     departamento?: string;
-    submit?: string;
   }>({});
+  const [toastOpen, setToastOpen] = useState(false);
 
   const progress = (activeStep / STEPS.length) * 100;
 
@@ -78,15 +79,9 @@ export function NovoColaborador() {
         status: ativarAoCriar ? 'Ativo' : 'Inativo',
       };
       setSubmitting(true);
-      setErrors((prev) => ({ ...prev, submit: undefined }));
       criarColaborador(dto)
         .then(() => navigate('/colaboradores'))
-        .catch((err) =>
-          setErrors((prev) => ({
-            ...prev,
-            submit: toUserMessage(err),
-          }))
-        )
+        .catch(() => setToastOpen(true))
         .finally(() => setSubmitting(false));
     }
   };
@@ -298,11 +293,6 @@ export function NovoColaborador() {
 
       {/* Botões de navegação */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, mt: 4 }}>
-        {errors.submit && (
-          <Typography variant="body2" color="error" sx={{ alignSelf: 'flex-start' }}>
-            {errors.submit}
-          </Typography>
-        )}
         <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
           onClick={handleBack}
@@ -346,6 +336,15 @@ export function NovoColaborador() {
         </Button>
         </Box>
       </Box>
+
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={() => setToastOpen(false)}
+        message="Não foi possível salvar o colaborador. Tente novamente."
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{ '& .MuiSnackbar-root': { bottom: 24, right: 24 } }}
+      />
     </Box>
   );
 }
