@@ -8,7 +8,6 @@ const MOCK_COLABORADORES: ColaboradorDTO[] = [
     email: 'fernandatorres@flugo.com',
     departamento: 'Design',
     status: 'Ativo',
-    iniciais: 'FT',
   },
   {
     id: '2',
@@ -16,7 +15,6 @@ const MOCK_COLABORADORES: ColaboradorDTO[] = [
     email: 'joanadarc@flugo.com',
     departamento: 'TI',
     status: 'Ativo',
-    iniciais: 'JD',
   },
   {
     id: '3',
@@ -24,7 +22,6 @@ const MOCK_COLABORADORES: ColaboradorDTO[] = [
     email: 'marifroes@flugo.com',
     departamento: 'Marketing',
     status: 'Ativo',
-    iniciais: 'MF',
   },
   {
     id: '4',
@@ -32,16 +29,8 @@ const MOCK_COLABORADORES: ColaboradorDTO[] = [
     email: 'claracosta@flugo.com',
     departamento: 'Produto',
     status: 'Inativo',
-    iniciais: 'CC',
   },
 ];
-
-function obterIniciais(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean);
-  if (partes.length === 0) return '??';
-  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
-}
 
 function proximoId(itens: ColaboradorDTO[]): string {
   const ids = itens.map((c) => parseInt(c.id, 10)).filter((n) => !Number.isNaN(n));
@@ -58,14 +47,12 @@ export class ColaboradorRepositoryMock implements ColaboradorRepository {
 
   async criar(dto: CriarColaboradorDTO): Promise<ColaboradorDTO> {
     const id = proximoId(this.dados);
-    const iniciais = obterIniciais(dto.nome);
     const novo: ColaboradorDTO = {
       id,
       nome: dto.nome,
       email: dto.email,
       departamento: dto.departamento,
       status: dto.status,
-      iniciais,
     };
     this.dados.push(novo);
     return { ...novo };

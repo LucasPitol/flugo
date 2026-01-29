@@ -6,7 +6,6 @@ export interface ColaboradorDTO {
   email: string;
   departamento: string;
   status: StatusColaborador;
-  iniciais: string;
 }
 
 export interface CriarColaboradorDTO {

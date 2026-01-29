@@ -1,6 +1,6 @@
 import type { ColaboradorDTO, CriarColaboradorDTO } from '../domain/types/ColaboradorDTO';
 import type { ColaboradorRepository } from '../domain/repositories/ColaboradorRepository';
-import { colaboradorRepositoryMock } from '../data/mocks/colaboradores.mock';
+import { colaboradorRepositoryFirestore } from '../data/firebase/colaborador.collection';
 
 export interface ColaboradoresGateway {
   listar(): Promise<ColaboradorDTO[]>;
@@ -20,7 +20,7 @@ class ColaboradoresGatewayImpl implements ColaboradoresGateway {
 }
 
 export function createColaboradoresGateway(
-  repository: ColaboradorRepository = colaboradorRepositoryMock
+  repository: ColaboradorRepository = colaboradorRepositoryFirestore
 ): ColaboradoresGateway {
   return new ColaboradoresGatewayImpl(repository);
 }

@@ -10,7 +10,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Avatar,
   Chip,
   TableSortLabel,
 } from '@mui/material';
@@ -178,23 +177,9 @@ export function Colaboradores() {
                   }}
                 >
                   <TableCell sx={{ py: 2, color: '#555' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: '#E5E7EB',
-                          color: '#555',
-                          fontWeight: 500,
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        {row.iniciais}
-                      </Avatar>
-                      <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
-                        {row.nome}
-                      </Typography>
-                    </Box>
+                    <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
+                      {row.nome}
+                    </Typography>
                   </TableCell>
                   <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
                     {row.email}
