@@ -19,7 +19,7 @@ export function Layout({ children }: LayoutProps) {
         sx={{
           width: SIDEBAR_WIDTH,
           flexShrink: 0,
-          bgcolor: '#f3f4f6',
+          bgcolor: '#fff',
           borderRight: '1px solid #e5e7eb',
           py: 2,
           px: 2,

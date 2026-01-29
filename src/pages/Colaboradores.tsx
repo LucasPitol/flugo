@@ -13,8 +13,6 @@ import {
   Chip,
   TableSortLabel,
 } from '@mui/material';
-import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
-
 const colaboradores = [
   {
     id: '1',
@@ -52,8 +50,8 @@ const colaboradores = [
 
 export function Colaboradores() {
   return (
-    <Box>
-      {/* Header: título + botão */}
+    <Box sx={{ maxWidth: 1200 }}>
+      {/* Header: título + botão — guia do print */}
       <Box
         sx={{
           display: 'flex',
@@ -62,128 +60,190 @@ export function Colaboradores() {
           mb: 3,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#374151' }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: '#555',
+            fontSize: '1.5rem',
+          }}
+        >
           Colaboradores
         </Typography>
         <Button
-          variant="outlined"
+          variant="contained"
           sx={{
-            bgcolor: 'primary.main',
+            bgcolor: '#2ECC71',
             color: '#fff',
             textTransform: 'none',
             fontWeight: 600,
-            px: 2,
+            px: 2.5,
             py: 1.25,
             borderRadius: 1.5,
-            '&:hover': { bgcolor: 'primary.dark' },
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            '&:hover': {
+              bgcolor: '#27AE60',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            },
           }}
         >
           Novo Colaborador
         </Button>
       </Box>
 
-      {/* Tabela */}
-      <TableContainer
-        component={Paper}
+      {/* Card da tabela */}
+      <Paper
         elevation={0}
         sx={{
-          border: '1px solid #e5e7eb',
-          borderRadius: 5,
+          borderRadius: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           overflow: 'hidden',
         }}
       >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#f3f4f6' }}>
-              <TableCell sx={{ fontWeight: 600, color: '#374151', py: 1.5 }}>
-                <TableSortLabel
-                  active
-                  direction="desc"
-                  sx={{ fontWeight: 600, color: '#374151' }}
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#F8F9FA' }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 500,
+                    color: '#555',
+                    py: 1.75,
+                    borderBottom: '1px solid #EEE',
+                    fontSize: '0.875rem',
+                  }}
                 >
-                  Nome
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#374151', py: 1.5 }}>
-                <TableSortLabel
-                  active
-                  direction="desc"
-                  sx={{ fontWeight: 600, color: '#374151' }}
-                >
-                  Email
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#374151', py: 1.5 }}>
-                <TableSortLabel
-                  active
-                  direction="desc"
-                  sx={{ fontWeight: 600, color: '#374151' }}
-                >
-                  Departamento
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#374151', py: 1.5 }}>
-                <TableSortLabel
-                  active
-                  direction="desc"
-                  sx={{ fontWeight: 600, color: '#374151' }}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {colaboradores.map((row) => (
-              <TableRow
-                key={row.id}
-                sx={{
-                  '&:not(:last-child)': { borderBottom: 'none' },
-                }}
-              >
-                <TableCell sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: '#e5e7eb',
-                        color: '#374151',
-                        fontWeight: 600,
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      {row.iniciais}
-                    </Avatar>
-                    <Typography sx={{ color: '#374151', fontWeight: 500 }}>
-                      {row.nome}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ color: '#374151', py: 2 }}>
-                  {row.email}
-                </TableCell>
-                <TableCell sx={{ color: '#374151', py: 2 }}>
-                  {row.departamento}
-                </TableCell>
-                <TableCell sx={{ py: 2 }}>
-                  <Chip
-                    label={row.status}
-                    size="small"
+                  <TableSortLabel
+                    active
+                    direction="desc"
                     sx={{
-                      bgcolor: row.status === 'Ativo' ? 'primary.main' : 'error.main',
-                      color: '#fff',
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      '& .MuiChip-label': { px: 1.25 },
+                      fontWeight: 500,
+                      color: '#555',
+                      '& .MuiTableSortLabel-icon': { color: '#888' },
                     }}
-                  />
+                  >
+                    Nome
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 500,
+                    color: '#555',
+                    py: 1.75,
+                    borderBottom: '1px solid #EEE',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <TableSortLabel
+                    active
+                    direction="desc"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#555',
+                      '& .MuiTableSortLabel-icon': { color: '#888' },
+                    }}
+                  >
+                    Email
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 500,
+                    color: '#555',
+                    py: 1.75,
+                    borderBottom: '1px solid #EEE',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <TableSortLabel
+                    active
+                    direction="desc"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#555',
+                      '& .MuiTableSortLabel-icon': { color: '#888' },
+                    }}
+                  >
+                    Departamento
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 500,
+                    color: '#555',
+                    py: 1.75,
+                    borderBottom: '1px solid #EEE',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <TableSortLabel
+                    active
+                    direction="desc"
+                    sx={{
+                      fontWeight: 500,
+                      color: '#555',
+                      '& .MuiTableSortLabel-icon': { color: '#888' },
+                    }}
+                  >
+                    Status
+                  </TableSortLabel>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {colaboradores.map((row) => (
+                <TableRow
+                  key={row.id}
+                  sx={{
+                    bgcolor: '#fff',
+                    '&:not(:last-child)': { borderBottom: 'none' },
+                  }}
+                >
+                  <TableCell sx={{ py: 2, color: '#555' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: '#E5E7EB',
+                          color: '#555',
+                          fontWeight: 500,
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {row.iniciais}
+                      </Avatar>
+                      <Typography sx={{ color: '#555', fontWeight: 500, fontSize: '0.875rem' }}>
+                        {row.nome}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
+                    {row.email}
+                  </TableCell>
+                  <TableCell sx={{ color: '#555', py: 2, fontSize: '0.875rem' }}>
+                    {row.departamento}
+                  </TableCell>
+                  <TableCell sx={{ py: 2 }}>
+                    <Chip
+                      label={row.status}
+                      size="small"
+                      sx={{
+                        bgcolor: row.status === 'Ativo' ? '#E6F7ED' : '#FEEEEE',
+                        color: row.status === 'Ativo' ? '#2ECC71' : '#E74C3C',
+                        fontWeight: 500,
+                        borderRadius: 1.5,
+                        border: 'none',
+                        '& .MuiChip-label': { px: 1.25 },
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </Box>
   );
 }

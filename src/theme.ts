@@ -1,18 +1,19 @@
 import { createTheme } from '@mui/material/styles';
 
+// Guia de estilos do print: verde #2ECC71, vermelho #E74C3C, cinzas #555 #F8F9FA #EEE
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#22c55e',
-      light: '#4ade80',
-      dark: '#16a34a',
+      main: '#2ECC71',
+      light: '#58D68D',
+      dark: '#27AE60',
     },
     error: {
-      main: '#ef4444',
+      main: '#E74C3C',
     },
     background: {
       default: '#ffffff',
-      paper: '#f9fafb',
+      paper: '#ffffff',
     },
   },
   typography: {
