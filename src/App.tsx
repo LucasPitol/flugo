@@ -5,6 +5,7 @@ import { theme } from './theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { Colaboradores } from './pages/Colaboradores';
+import { Login } from './pages/Login';
 
 const NovoColaborador = lazy(() =>
   import('./pages/NovoColaborador').then((m) => ({ default: m.NovoColaborador }))
@@ -68,6 +69,7 @@ function App() {
           <BrowserRouter>
             <Suspense fallback={<PageFallback />}>
               <Routes>
+                <Route path="/login" element={<Login />} />
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Navigate to="/colaboradores" replace />} />
                   <Route path="colaboradores" element={<Colaboradores />} />
