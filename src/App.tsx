@@ -71,8 +71,11 @@ function App() {
           <BrowserRouter>
             <Suspense fallback={<PageFallback />}>
               <Routes>
+                {/* Rotas públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Cadastro />} />
+
+                {/* Rotas privadas — envolvidas por ProtectedRoute */}
                 <Route path="/" element={<ProtectedRoute />}>
                   <Route element={<Layout />}>
                     <Route index element={<Navigate to="/colaboradores" replace />} />
