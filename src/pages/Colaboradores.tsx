@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -14,43 +15,16 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-const colaboradores = [
-  {
-    id: '1',
-    nome: 'Fernanda Torres',
-    email: 'fernandatorres@flugo.com',
-    departamento: 'Design',
-    status: 'Ativo' as const,
-    iniciais: 'FT',
-  },
-  {
-    id: '2',
-    nome: "Joana D'Arc",
-    email: 'joanadarc@flugo.com',
-    departamento: 'TI',
-    status: 'Ativo' as const,
-    iniciais: 'JD',
-  },
-  {
-    id: '3',
-    nome: 'Mari Froes',
-    email: 'marifroes@flugo.com',
-    departamento: 'Marketing',
-    status: 'Ativo' as const,
-    iniciais: 'MF',
-  },
-  {
-    id: '4',
-    nome: 'Clara Costa',
-    email: 'claracosta@flugo.com',
-    departamento: 'Produto',
-    status: 'Inativo' as const,
-    iniciais: 'CC',
-  },
-];
+import { listarColaboradores } from '../services/colaboradoresService';
+import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 
 export function Colaboradores() {
   const navigate = useNavigate();
+  const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
+
+  useEffect(() => {
+    listarColaboradores().then(setColaboradores);
+  }, []);
 
   return (
     <Box sx={{ maxWidth: 1200 }}>

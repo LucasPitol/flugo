@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { criarColaborador } from '../services/colaboradoresService';
 import {
   Box,
   Typography,
@@ -32,7 +33,12 @@ export function NovoColaborador() {
   const [emailColaborador, setEmailColaborador] = useState('');
   const [ativarAoCriar, setAtivarAoCriar] = useState(true);
   const [departamentoColaborador, setDepartamentoColaborador] = useState('');
-  const [errors, setErrors] = useState<{ nome?: string; email?: string; departamento?: string }>({});
+  const [errors, setErrors] = useState<{
+    nome?: string;
+    email?: string;
+    departamento?: string;
+    submit?: string;
+  }>({});
 
   const progress = (activeStep / STEPS.length) * 100;
 
@@ -62,7 +68,14 @@ export function NovoColaborador() {
     if (activeStep < STEPS.length - 1) {
       setActiveStep((prev) => prev + 1);
     } else {
-      navigate('/colaboradores');
+      criarColaborador({
+        nome: nomeColaborador.trim(),
+        email: emailColaborador.trim(),
+        departamento: departamentoColaborador,
+        status: ativarAoCriar ? 'Ativo' : 'Inativo',
+      })
+        .then(() => navigate('/colaboradores'))
+        .catch(() => setErrors((prev) => ({ ...prev, submit: 'Erro ao cadastrar. Tente novamente.' })));
     }
   };
 
@@ -272,7 +285,13 @@ export function NovoColaborador() {
       </Box>
 
       {/* Botões de navegação */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 4 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, mt: 4 }}>
+        {errors.submit && (
+          <Typography variant="body2" color="error" sx={{ alignSelf: 'flex-start' }}>
+            {errors.submit}
+          </Typography>
+        )}
+        <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
           onClick={handleBack}
           sx={{
@@ -303,6 +322,7 @@ export function NovoColaborador() {
         >
           {activeStep === STEPS.length - 1 ? 'Concluir' : 'Próximo'}
         </Button>
+        </Box>
       </Box>
     </Box>
   );

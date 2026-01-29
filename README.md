@@ -35,16 +35,48 @@ npm run preview
 
 ```
 flugo/
-├── public/          # Arquivos estáticos
+├── public/              # Arquivos estáticos (imagens, etc.)
+│   ├── images.jpeg
+│   └── logo2.png
 ├── src/
-│   ├── App.tsx      # Componente principal
+│   ├── components/     # Componentes reutilizáveis
+│   │   └── Layout.tsx
+│   ├── pages/          # Páginas da aplicação
+│   │   ├── Colaboradores.tsx
+│   │   └── NovoColaborador.tsx
+│   ├── services/      # Gateways (chamam back-end)
+│   │   └── colaboradoresService.ts
+│   ├── App.tsx         # Componente principal
 │   ├── App.css
-│   ├── main.tsx     # Entry point
-│   ├── index.css    # Estilos globais
+│   ├── main.tsx        # Entry point
+│   ├── index.css       # Estilos globais
+│   ├── theme.ts        # Tema (MUI)
 │   └── vite-env.d.ts
+├── back-end/           # Camada de dados e regras (front chama via src/services)
+│   ├── data/           # Implementações (Firebase, mocks)
+│   │   ├── firebase/   # Firebase (firestore, config) — futuro
+│   │   │   ├── firestore/
+│   │   │   │   └── colaborador.collection.ts
+│   │   │   ├── config.ts
+│   │   │   └── index.ts
+│   │   └── mocks/      # Dados e repositórios mock (uso atual)
+│   │       └── colaboradores.mock.ts
+│   │
+│   ├── domain/         # Regras e contratos (entidades, DTOs, repositórios)
+│   │   ├── entities/   # Entidades de domínio
+│   │   │   └── Colaborador.ts
+│   │   ├── repositories/  # Contratos (interfaces) de repositório
+│   │   │   └── ColaboradorRepository.ts
+│   │   └── types/      # DTOs e tipos compartilhados
+│   │       └── ColaboradorDTO.ts
+│   │
+│   └── interface/      # Porta de entrada (gateways usados pelo front)
+│       └── gateways/
+│           └── colaboradoresGateway.ts
 ├── index.html
 ├── package.json
 ├── tsconfig.json
+├── tsconfig.node.json
 ├── vite.config.ts
-└── vercel.json      # Config opcional para Vercel
+└── vercel.json         # Config opcional para Vercel
 ```
