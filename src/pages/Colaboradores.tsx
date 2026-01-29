@@ -12,10 +12,19 @@ import {
   Skeleton,
   Avatar,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
-import { listarColaboradores } from '../services/colaboradoresService';
+import {
+  listarColaboradores,
+  bulkDeleteColaboradores,
+  toUserMessage,
+} from '../services/colaboradoresService';
 import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 import { colors, typography } from '../theme';
 import {
@@ -47,6 +56,10 @@ export function Colaboradores() {
   const [orderBy, setOrderBy] = useState<OrderByKey>('nome');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [toastBulkOpen, setToastBulkOpen] = useState(false);
+  const [toastBulkMessage, setToastBulkMessage] = useState('');
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -93,6 +106,30 @@ export function Colaboradores() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleBulkDelete = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setDeleting(true);
+    bulkDeleteColaboradores(ids)
+      .then(() => {
+        setSelectedIds(new Set());
+        load();
+        setConfirmOpen(false);
+        setToastBulkMessage(
+          ids.length === 1
+            ? '1 colaborador excluído.'
+            : `${ids.length} colaboradores excluídos.`
+        );
+        setToastBulkOpen(true);
+      })
+      .catch((err) => {
+        setConfirmOpen(false);
+        setToastBulkMessage(toUserMessage(err));
+        setToastBulkOpen(true);
+      })
+      .finally(() => setDeleting(false));
+  }, [selectedIds, load]);
+
   useEffect(() => {
     load();
   }, [load]);
@@ -102,9 +139,19 @@ export function Colaboradores() {
       <PageHeader
         title="Colaboradores"
         action={
-          <AppButton variant="contained" onClick={() => navigate('/colaboradores/novo')}>
-            Novo Colaborador
-          </AppButton>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {selectedIds.size > 0 && (
+              <AppButton
+                variant="outlined"
+                onClick={() => setConfirmOpen(true)}
+              >
+                Excluir selecionados
+              </AppButton>
+            )}
+            <AppButton variant="contained" onClick={() => navigate('/colaboradores/novo')}>
+              Novo Colaborador
+            </AppButton>
+          </Box>
         }
       />
 
@@ -118,6 +165,41 @@ export function Colaboradores() {
           </AppButton>
         }
       />
+
+      <AppSnackbar
+        open={toastBulkOpen}
+        onClose={() => setToastBulkOpen(false)}
+        message={toastBulkMessage}
+      />
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => !deleting && setConfirmOpen(false)}
+        aria-labelledby="bulk-delete-dialog-title"
+        aria-describedby="bulk-delete-dialog-description"
+      >
+        <DialogTitle id="bulk-delete-dialog-title">Excluir selecionados</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="bulk-delete-dialog-description">
+            {selectedIds.size === 1
+              ? 'Excluir 1 colaborador? Essa ação não pode ser desfeita.'
+              : `Excluir ${selectedIds.size} colaboradores? Essa ação não pode ser desfeita.`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton onClick={() => setConfirmOpen(false)} disabled={deleting}>
+            Cancelar
+          </AppButton>
+          <AppButton
+            variant="contained"
+            color="error"
+            onClick={handleBulkDelete}
+            loading={deleting}
+          >
+            Excluir
+          </AppButton>
+        </DialogActions>
+      </Dialog>
 
       <AppCard sx={{ overflow: 'hidden' }}>
         <TableContainer>
