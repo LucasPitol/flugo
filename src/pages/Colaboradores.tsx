@@ -11,6 +11,7 @@ import {
   TableSortLabel,
   Skeleton,
   Avatar,
+  Checkbox,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +46,7 @@ export function Colaboradores() {
   const [toastOpen, setToastOpen] = useState(false);
   const [orderBy, setOrderBy] = useState<OrderByKey>('nome');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -60,6 +62,23 @@ export function Colaboradores() {
     });
     return arr;
   }, [colaboradores, orderBy, order]);
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const allIds = sortedColaboradores.map((c) => c.id);
+      const allSelected = allIds.length > 0 && allIds.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(allIds);
+    });
+  }, [sortedColaboradores]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -105,6 +124,20 @@ export function Colaboradores() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox" sx={{ width: 48 }}>
+                  <Checkbox
+                    indeterminate={
+                      selectedIds.size > 0 &&
+                      selectedIds.size < sortedColaboradores.length
+                    }
+                    checked={
+                      sortedColaboradores.length > 0 &&
+                      selectedIds.size === sortedColaboradores.length
+                    }
+                    onChange={toggleSelectAll}
+                    aria-label="selecionar todos"
+                  />
+                </TableCell>
                 <TableCell>
                   <TableSortLabel
                     active={orderBy === 'nome'}
@@ -147,6 +180,7 @@ export function Colaboradores() {
               {loading ? (
                 Array.from({ length: SKELETON_ROWS }).map((_, index) => (
                   <TableRow key={index} sx={{ '&:not(:last-child) .MuiTableCell-root': { borderBottom: 'none' } }}>
+                    <TableCell padding="checkbox" sx={{ width: 48, py: 2 }} />
                     <TableCell sx={{ py: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Skeleton variant="circular" width={36} height={36} />
@@ -166,7 +200,7 @@ export function Colaboradores() {
                 ))
               ) : colaboradores.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} sx={{ borderBottom: 'none', p: 0, verticalAlign: 'top' }}>
+                  <TableCell colSpan={5} sx={{ borderBottom: 'none', p: 0, verticalAlign: 'top' }}>
                     <EmptyState
                       message="Nenhum colaborador cadastrado."
                       description='Clique em "Novo Colaborador" para adicionar o primeiro.'
@@ -179,6 +213,13 @@ export function Colaboradores() {
                     key={row.id}
                     sx={{ '&:not(:last-child) .MuiTableCell-root': { borderBottom: 'none' } }}
                   >
+                    <TableCell padding="checkbox" sx={{ width: 48, py: 2 }}>
+                      <Checkbox
+                        checked={selectedIds.has(row.id)}
+                        onChange={() => toggleRow(row.id)}
+                        aria-label={`selecionar ${row.nome}`}
+                      />
+                    </TableCell>
                     <TableCell sx={{ py: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Avatar
