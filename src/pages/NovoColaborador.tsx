@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { criarColaborador } from '../services/colaboradoresService';
+import { criarColaborador, toUserMessage } from '../services/colaboradoresService';
 import type { CriarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 import {
   Box,
@@ -27,16 +27,6 @@ const STEPS = [
 const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CREATE_TIMEOUT_MS = 15000;
-
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(message)), ms)
-    ),
-  ]);
-}
 
 export function NovoColaborador() {
   const navigate = useNavigate();
@@ -89,16 +79,12 @@ export function NovoColaborador() {
       };
       setSubmitting(true);
       setErrors((prev) => ({ ...prev, submit: undefined }));
-      withTimeout(
-        criarColaborador(dto),
-        CREATE_TIMEOUT_MS,
-        'Timeout ao salvar. Verifique a conexão e as variáveis VITE_FIREBASE_* no .env.'
-      )
+      criarColaborador(dto)
         .then(() => navigate('/colaboradores'))
-        .catch((err: Error) =>
+        .catch((err) =>
           setErrors((prev) => ({
             ...prev,
-            submit: err?.message ?? 'Erro ao cadastrar. Tente novamente.',
+            submit: toUserMessage(err),
           }))
         )
         .finally(() => setSubmitting(false));

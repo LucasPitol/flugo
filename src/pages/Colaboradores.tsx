@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -14,10 +14,12 @@ import {
   TableSortLabel,
   Skeleton,
   Avatar,
+  Alert,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
-import { listarColaboradores } from '../services/colaboradoresService';
+import { listarColaboradores, toUserMessage } from '../services/colaboradoresService';
 import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
 
 const SKELETON_ROWS = 6;
@@ -26,13 +28,26 @@ export function Colaboradores() {
   const navigate = useNavigate();
   const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setError(null);
     setLoading(true);
     listarColaboradores()
-      .then(setColaboradores)
+      .then((data) => {
+        setColaboradores(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setColaboradores([]);
+        setError(toUserMessage(err));
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <Box sx={{ maxWidth: 1200 }}>
@@ -76,6 +91,27 @@ export function Colaboradores() {
           Novo Colaborador
         </Button>
       </Box>
+
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={load}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              Tentar novamente
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
 
       {/* Card da tabela */}
       <Paper
