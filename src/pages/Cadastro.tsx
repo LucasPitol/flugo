@@ -23,6 +23,8 @@ function toCadastroErrorMessage(err: unknown): string {
         return 'Muitas tentativas. Tente novamente mais tarde.';
       case 'auth/network-request-failed':
         return 'Erro de conexão. Verifique sua rede.';
+      case 'auth/operation-not-allowed':
+        return 'Cadastro por e-mail/senha não está habilitado.';
     }
   }
   if (err instanceof AuthError && err.message) return err.message;
@@ -134,6 +136,7 @@ export function Cadastro() {
           error={!!errors.email}
           helperText={errors.email}
           autoComplete="email"
+          disabled={submitting}
           sx={{ mb: 2 }}
         />
         <TextField
@@ -156,6 +159,7 @@ export function Cadastro() {
           error={!!errors.password}
           helperText={errors.password}
           autoComplete="new-password"
+          disabled={submitting}
           sx={{ mb: 2 }}
         />
         <TextField
@@ -176,6 +180,7 @@ export function Cadastro() {
           error={!!errors.confirmPassword}
           helperText={errors.confirmPassword}
           autoComplete="new-password"
+          disabled={submitting}
           sx={{ mb: 3 }}
         />
 
@@ -189,7 +194,15 @@ export function Cadastro() {
           Criar conta
         </AppButton>
 
-        <Typography variant="body2" sx={{ textAlign: 'center', color: colors.neutral.textMuted }}>
+        <Typography
+          variant="body2"
+          sx={{
+            textAlign: 'center',
+            color: colors.neutral.textMuted,
+            opacity: submitting ? 0.6 : 1,
+            pointerEvents: submitting ? 'none' : 'auto',
+          }}
+        >
           Já tem conta?{' '}
           <Link
             component={RouterLink}
@@ -210,6 +223,11 @@ export function Cadastro() {
         open={toastOpen}
         onClose={() => setToastOpen(false)}
         message={toastMessage}
+        action={
+          <AppButton color="inherit" size="small" onClick={() => setToastOpen(false)}>
+            Fechar
+          </AppButton>
+        }
       />
     </Box>
   );
