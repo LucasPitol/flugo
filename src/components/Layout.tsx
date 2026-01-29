@@ -54,7 +54,7 @@ export function Layout({ children }: LayoutProps) {
             py: 1.25,
             px: 1.5,
             borderRadius: 1,
-            bgcolor: '#e5e7eb',
+            bgcolor: '#fff',
             color: '#374151',
           }}
         >
