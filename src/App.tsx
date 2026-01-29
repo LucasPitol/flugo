@@ -3,10 +3,8 @@ import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { theme } from './theme';
 import { Layout } from './components/Layout';
+import { Colaboradores } from './pages/Colaboradores';
 
-const Colaboradores = lazy(() =>
-  import('./pages/Colaboradores').then((m) => ({ default: m.Colaboradores }))
-);
 const NovoColaborador = lazy(() =>
   import('./pages/NovoColaborador').then((m) => ({ default: m.NovoColaborador }))
 );
