@@ -82,12 +82,13 @@ function App() {
                     <Route index element={<Navigate to="/colaboradores" replace />} />
                     <Route path="colaboradores" element={<Colaboradores />} />
                     <Route path="colaboradores/novo" element={<NovoColaborador />} />
+                    <Route path="*" element={<Navigate to="/404" replace />} />
                   </Route>
                 </Route>
 
-                {/* 404 — catch-all */}
+                {/* 404 — página e catch-all raiz */}
                 <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
             </Suspense>
           </BrowserRouter>
