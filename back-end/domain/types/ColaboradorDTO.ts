@@ -14,3 +14,11 @@ export interface CriarColaboradorDTO {
   departamento: string;
   status: StatusColaborador;
 }
+
+/** Campos opcionais para atualização parcial de colaborador. */
+export interface AtualizarColaboradorDTO {
+  nome?: string;
+  email?: string;
+  departamento?: string;
+  status?: StatusColaborador;
+}

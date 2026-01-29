@@ -1,4 +1,8 @@
-import type { ColaboradorDTO, CriarColaboradorDTO } from '../../domain/types/ColaboradorDTO';
+import type {
+  ColaboradorDTO,
+  CriarColaboradorDTO,
+  AtualizarColaboradorDTO,
+} from '../../domain/types/ColaboradorDTO';
 import type { ColaboradorRepository } from '../../domain/repositories/ColaboradorRepository';
 
 const MOCK_COLABORADORES: ColaboradorDTO[] = [
@@ -56,6 +60,32 @@ export class ColaboradorRepositoryMock implements ColaboradorRepository {
     };
     this.dados.push(novo);
     return { ...novo };
+  }
+
+  async atualizar(id: string, dto: AtualizarColaboradorDTO): Promise<ColaboradorDTO> {
+    const idx = this.dados.findIndex((c) => c.id === id);
+    if (idx === -1) {
+      throw new Error(`Colaborador não encontrado: ${id}`);
+    }
+    const atual = this.dados[idx];
+    const atualizado: ColaboradorDTO = {
+      ...atual,
+      ...(dto.nome !== undefined && { nome: dto.nome }),
+      ...(dto.email !== undefined && { email: dto.email }),
+      ...(dto.departamento !== undefined && { departamento: dto.departamento }),
+      ...(dto.status !== undefined && { status: dto.status }),
+    };
+    this.dados[idx] = atualizado;
+    return { ...atualizado };
+  }
+
+  async remover(id: string): Promise<void> {
+    this.dados = this.dados.filter((c) => c.id !== id);
+  }
+
+  async removerEmMassa(ids: string[]): Promise<void> {
+    const set = new Set(ids);
+    this.dados = this.dados.filter((c) => !set.has(c.id));
   }
 }
 
