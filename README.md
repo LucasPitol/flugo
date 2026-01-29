@@ -54,12 +54,12 @@ flugo/
 │   └── vite-env.d.ts
 ├── back-end/           # Camada de dados e regras (front chama via src/services)
 │   ├── data/           # Implementações (Firebase, mocks)
-│   │   ├── firebase/   # Firebase (firestore, config) — futuro
+│   │   ├── firebase/   
 │   │   │   ├── firestore/
 │   │   │   │   └── colaborador.collection.ts
 │   │   │   ├── config.ts
 │   │   │   └── index.ts
-│   │   └── mocks/      # Dados e repositórios mock (uso atual)
+│   │   └── mocks/      
 │   │       └── colaboradores.mock.ts
 │   │
 │   ├── domain/         # Regras e contratos (entidades, DTOs, repositórios)
@@ -67,7 +67,7 @@ flugo/
 │   │   │   └── Colaborador.ts
 │   │   ├── repositories/  # Contratos (interfaces) de repositório
 │   │   │   └── ColaboradorRepository.ts
-│   │   └── types/      # DTOs e tipos compartilhados
+│   │   └── types/      
 │   │       └── ColaboradorDTO.ts
 │   │
 │   └── interface/      # Porta de entrada (gateways usados pelo front)
