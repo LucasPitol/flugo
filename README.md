@@ -2,6 +2,8 @@
 
 Aplicação de gestão de colaboradores: listagem em tabela e cadastro em etapas, com persistência em **Firebase Firestore**.
 
+Acesse [https://flugo-six.vercel.app](https://flugo-six.vercel.app).
+
 ## Stack
 
 - **React 18** + **TypeScript** + **Vite**
@@ -24,8 +26,6 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 ```
-
-Opcional: `VITE_FIREBASE_STORAGE_BUCKET` se for usar Storage.
 
 ## Desenvolvimento local
 
