@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { theme } from './theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Colaboradores } from './pages/Colaboradores';
 import { Login } from './pages/Login';
 import { Cadastro } from './pages/Cadastro';
@@ -72,10 +73,12 @@ function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Cadastro />} />
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/colaboradores" replace />} />
-                  <Route path="colaboradores" element={<Colaboradores />} />
-                  <Route path="colaboradores/novo" element={<NovoColaborador />} />
+                <Route path="/" element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route index element={<Navigate to="/colaboradores" replace />} />
+                    <Route path="colaboradores" element={<Colaboradores />} />
+                    <Route path="colaboradores/novo" element={<NovoColaborador />} />
+                  </Route>
                 </Route>
               </Routes>
             </Suspense>
