@@ -12,6 +12,15 @@ import type {
   ColaboradoresFilter,
 } from '../../../services/colaboradores/types';
 
+/**
+ * Filtros híbridos (remoto + local):
+ * - remoteFilters (department): enviado ao backend (Firestore where('departamento', '==', department)).
+ *   Firestore indexa igualdade de forma eficiente; refetch só quando department muda.
+ * - localFilters (name, email): aplicados no front sobre a lista já carregada (includes case-insensitive).
+ *   Firestore não é bom para "contains" em texto (sem full-text search); filtrar localmente evita
+ *   overfetch e mantém UX responsiva para MVP.
+ */
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type OrderByKey = 'nome' | 'email' | 'departamento' | 'status';
@@ -22,6 +31,21 @@ function compare(a: Colaborador, b: Colaborador, orderBy: OrderByKey): number {
   if (va < vb) return -1;
   if (va > vb) return 1;
   return 0;
+}
+
+/** Aplica apenas filtros locais (name, email). Department é filtrado no backend. */
+function applyLocalFilters(
+  list: Colaborador[],
+  f: Pick<ColaboradoresFilter, 'name' | 'email'>
+): Colaborador[] {
+  const nameLower = (f.name?.trim() ?? '').toLowerCase();
+  const emailLower = (f.email?.trim() ?? '').toLowerCase();
+  if (nameLower === '' && emailLower === '') return list;
+  return list.filter((c) => {
+    if (nameLower && !c.nome.toLowerCase().includes(nameLower)) return false;
+    if (emailLower && !c.email.toLowerCase().includes(emailLower)) return false;
+    return true;
+  });
 }
 
 export function useColaboradores() {
@@ -47,14 +71,25 @@ export function useColaboradores() {
   const [confirmSingleDeleteOpen, setConfirmSingleDeleteOpen] = useState(false);
   const [deletingSingle, setDeletingSingle] = useState(false);
   const [filters, setFilters] = useState<ColaboradoresFilter>({});
+  const [appliedFilters, setAppliedFilters] = useState<ColaboradoresFilter>({});
 
   const onFilterChange = useCallback((next: Partial<ColaboradoresFilter>) => {
     setFilters((prev: ColaboradoresFilter) => ({ ...prev, ...next }));
   }, []);
 
+  const onApplyFilters = useCallback(() => {
+    setAppliedFilters(filters);
+  }, [filters]);
+
   const onClearFilters = useCallback(() => {
     setFilters({});
+    setAppliedFilters({});
   }, []);
+
+  /** Sincroniza o rascunho do formulário com os filtros atualmente aplicados (ex.: ao abrir o drawer). */
+  const syncFiltersFromApplied = useCallback(() => {
+    setFilters(appliedFilters);
+  }, [appliedFilters]);
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -62,14 +97,29 @@ export function useColaboradores() {
     setOrder(isAsc ? 'desc' : 'asc');
   }, [orderBy, order]);
 
+  const remoteFilters = useMemo(
+    () => ({ department: appliedFilters.department }),
+    [appliedFilters.department]
+  );
+
+  const localFilters = useMemo(
+    () => ({ name: appliedFilters.name, email: appliedFilters.email }),
+    [appliedFilters.name, appliedFilters.email]
+  );
+
+  const filteredColaboradores = useMemo(
+    () => applyLocalFilters(colaboradores, localFilters),
+    [colaboradores, localFilters]
+  );
+
   const sortedColaboradores = useMemo(() => {
-    const arr = [...colaboradores];
+    const arr = [...filteredColaboradores];
     arr.sort((a, b) => {
       const cmp = compare(a, b, orderBy);
       return order === 'asc' ? cmp : -cmp;
     });
     return arr;
-  }, [colaboradores, orderBy, order]);
+  }, [filteredColaboradores, orderBy, order]);
 
   const toggleRow = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -90,7 +140,7 @@ export function useColaboradores() {
 
   const load = useCallback(() => {
     setLoading(true);
-    listarColaboradores()
+    listarColaboradores(remoteFilters)
       .then((data) => {
         setColaboradores(data);
       })
@@ -99,7 +149,11 @@ export function useColaboradores() {
         setToastOpen(true);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [remoteFilters]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleBulkDelete = useCallback(() => {
     const ids = Array.from(selectedIds);
@@ -125,9 +179,6 @@ export function useColaboradores() {
       .finally(() => setDeleting(false));
   }, [selectedIds, load]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
 
   useEffect(() => {
     if (editingColaborador) {
@@ -218,8 +269,11 @@ export function useColaboradores() {
 
     // Filtros
     filters,
+    appliedFilters,
     onFilterChange,
+    onApplyFilters,
     onClearFilters,
+    syncFiltersFromApplied,
 
     // Ordenação
     orderBy,

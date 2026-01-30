@@ -2,6 +2,8 @@ import {
   getFirestore,
   collection,
   getDocs,
+  query,
+  where,
   addDoc,
   doc,
   getDoc,
@@ -14,6 +16,7 @@ import type {
   ColaboradorDTO,
   CriarColaboradorDTO,
   AtualizarColaboradorDTO,
+  ListarColaboradoresFiltro,
   StatusColaborador,
 } from '../../domain/types/ColaboradorDTO';
 import type { ColaboradorRepository } from '../../domain/repositories/ColaboradorRepository';
@@ -68,10 +71,14 @@ function assertColaboradorFirestore(data: unknown): data is ColaboradorFirestore
 }
 
 export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
-  async listar(): Promise<ColaboradorDTO[]> {
+  async listar(filtro?: ListarColaboradoresFiltro): Promise<ColaboradorDTO[]> {
     try {
       const colaboradoresRef = getColaboradoresRef();
-      const snapshot = await getDocs(colaboradoresRef);
+      const department = filtro?.department?.trim();
+      const q = department
+        ? query(colaboradoresRef, where('departamento', '==', department))
+        : colaboradoresRef;
+      const snapshot = await getDocs(q);
       return snapshot.docs.map((doc) => {
         const data = doc.data();
         if (!assertColaboradorFirestore(data)) {

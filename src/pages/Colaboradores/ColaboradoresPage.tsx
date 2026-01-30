@@ -69,11 +69,14 @@ export function ColaboradoresPage() {
     setEditToastOpen,
     editToastMessage,
     filters,
+    appliedFilters,
     onFilterChange,
+    onApplyFilters,
     onClearFilters,
+    syncFiltersFromApplied,
   } = useColaboradores();
 
-  const activeCount = useMemo(() => activeFiltersCount(filters), [filters]);
+  const activeCount = useMemo(() => activeFiltersCount(appliedFilters), [appliedFilters]);
   const filtrosLabel = activeCount > 0 ? `Filtros (${activeCount})` : 'Filtros';
 
   return (
@@ -113,7 +116,10 @@ export function ColaboradoresPage() {
                 <AppButton
                   variant="outlined"
                   startIcon={<SearchIcon />}
-                  onClick={() => setFilterOpen(true)}
+                  onClick={() => {
+                    syncFiltersFromApplied();
+                    setFilterOpen(true);
+                  }}
                 >
                   {filtrosLabel}
                 </AppButton>
@@ -136,7 +142,10 @@ export function ColaboradoresPage() {
         filters={filters}
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
-        onApply={() => setFilterOpen(false)}
+        onApply={() => {
+          onApplyFilters();
+          setFilterOpen(false);
+        }}
       />
 
       <AppSnackbar

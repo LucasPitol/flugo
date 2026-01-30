@@ -6,6 +6,7 @@ import type {
 } from '../../back-end/domain/types/ColaboradorDTO';
 import type {
   Colaborador,
+  ColaboradoresFilter,
   CreateColaboradorInput,
   UpdateColaboradorInput,
 } from './colaboradores/types';
@@ -51,10 +52,18 @@ function toUserMessage(err: unknown): string {
   return 'Ocorreu um erro inesperado. Tente novamente.';
 }
 
-export async function listarColaboradores(): Promise<Colaborador[]> {
+export async function listarColaboradores(
+  filters?: ColaboradoresFilter
+): Promise<Colaborador[]> {
   const timeoutMsg =
     'Tempo esgotado ao carregar os colaboradores.' + FIREBASE_ENV_HINT;
-  const list = await withTimeout(gateway.listar(), LIST_TIMEOUT_MS, timeoutMsg);
+  const department = filters?.department?.trim();
+  const filtro = department ? { department } : undefined;
+  const list = await withTimeout(
+    gateway.listar(filtro),
+    LIST_TIMEOUT_MS,
+    timeoutMsg
+  );
   return list.map(toColaborador);
 }
 

@@ -2,12 +2,13 @@ import type {
   ColaboradorDTO,
   CriarColaboradorDTO,
   AtualizarColaboradorDTO,
+  ListarColaboradoresFiltro,
 } from '../domain/types/ColaboradorDTO';
 import type { ColaboradorRepository } from '../domain/repositories/ColaboradorRepository';
 import { colaboradorRepositoryFirestore } from '../data/firebase/colaborador.collection';
 
 export interface ColaboradoresGateway {
-  listar(): Promise<ColaboradorDTO[]>;
+  listar(filtro?: ListarColaboradoresFiltro): Promise<ColaboradorDTO[]>;
   criar(dto: CriarColaboradorDTO): Promise<ColaboradorDTO>;
   editar(id: string, dto: AtualizarColaboradorDTO): Promise<ColaboradorDTO>;
   excluir(id: string): Promise<void>;
@@ -17,8 +18,8 @@ export interface ColaboradoresGateway {
 class ColaboradoresGatewayImpl implements ColaboradoresGateway {
   constructor(private readonly repository: ColaboradorRepository) {}
 
-  async listar(): Promise<ColaboradorDTO[]> {
-    return this.repository.listar();
+  async listar(filtro?: ListarColaboradoresFiltro): Promise<ColaboradorDTO[]> {
+    return this.repository.listar(filtro);
   }
 
   async criar(dto: CriarColaboradorDTO): Promise<ColaboradorDTO> {

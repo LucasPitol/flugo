@@ -49,7 +49,7 @@ O build sai em `dist/`. O preview serve o build localmente.
 ## Funcionalidades
 
 - **Login** (`/login`) e **Cadastro** (`/cadastro`): autenticação via Firebase Auth. Rotas privadas protegidas por `ProtectedRoute`.
-- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; Limpar / Aplicar); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (nome, e-mail, departamento, status; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
+- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; efetivados ao clicar em "Aplicar filtros" — departamento vai para query no Firestore, nome/e-mail filtrados localmente; "Limpar" zera e refaz fetch); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (nome, e-mail, departamento, status; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
 - **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais), validação de e-mail, seleção de departamento e status; persistência no Firestore.
 - **404** (`/404`): página não encontrada.
 
@@ -58,6 +58,11 @@ O build sai em `dist/`. O preview serve o build localmente.
 - **UI não conhece domínio:** páginas, hooks, contexts e components em `src/` **não** importam `back-end/domain`. Contratos da UI ficam em **services** (tipos, inputs, filtros).
 - **Service é a fronteira:** apenas `src/services/*` pode importar `back-end/domain` e `back-end/interface`. O service mapeia DTOs do domínio para os tipos expostos à UI (e vice-versa).
 - **Checklist:** Page / Hook / Context / Component → ❌ domain. Service / Gateway → ✅ domain.
+
+### Filtros híbridos (Colaboradores)
+
+- **department → backend:** Firestore faz `where('departamento', '==', department)`. Igualdade é indexada e eficiente; refetch só quando o departamento aplicado muda.
+- **name / email → local:** Aplicados no front sobre a lista já carregada (includes, case-insensitive). Firestore não oferece "contains" em texto de forma barata; filtrar localmente evita overfetch e mantém a UX responsiva para MVP. Se no futuro houver full-text search (ex.: Algolia/Elastic), name/email podem migrar para query remota.
 
 ## Estrutura do projeto
 
@@ -89,7 +94,7 @@ flugo/
 │   │   │   ├── ColaboradoresTable.tsx     # Tabela com ordenação e seleção
 │   │   │   ├── ColaboradorEditDrawer.tsx  # Drawer de edição e exclusão única
 │   │   │   ├── hooks/
-│   │   │   │   └── useColaboradores.ts    # Estado e lógica da listagem/edição/filtros
+│   │   │   │   └── useColaboradores.ts    # Listagem, filtros híbridos (remoto: dept; local: name, email), ordenação, edição
 │   │   │   └── index.ts
 │   │   ├── Login.tsx
 │   │   ├── NotFound.tsx

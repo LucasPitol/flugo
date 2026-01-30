@@ -22,3 +22,8 @@ export interface AtualizarColaboradorDTO {
   departamento?: string;
   status?: StatusColaborador;
 }
+
+/** Filtro opcional para listar colaboradores (query no backend). */
+export interface ListarColaboradoresFiltro {
+  department?: string;
+}
