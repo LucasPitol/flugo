@@ -6,12 +6,16 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Colaboradores } from './pages/Colaboradores';
+import { Departamentos } from './pages/Departamentos';
 import { Login } from './pages/Login';
 import { Cadastro } from './pages/Cadastro';
 import { NotFound } from './pages/NotFound';
 
 const NovoColaborador = lazy(() =>
   import('./pages/NovoColaborador').then((m) => ({ default: m.NovoColaborador }))
+);
+const NovoDepartamento = lazy(() =>
+  import('./pages/Departamentos/NovoDepartamento').then((m) => ({ default: m.NovoDepartamento }))
 );
 
 function PageFallback() {
@@ -82,6 +86,8 @@ function App() {
                     <Route index element={<Navigate to="/colaboradores" replace />} />
                     <Route path="colaboradores" element={<Colaboradores />} />
                     <Route path="colaboradores/novo" element={<NovoColaborador />} />
+                    <Route path="departamentos" element={<Departamentos />} />
+                    <Route path="departamentos/novo" element={<NovoDepartamento />} />
                     <Route path="*" element={<Navigate to="/404" replace />} />
                   </Route>
                 </Route>

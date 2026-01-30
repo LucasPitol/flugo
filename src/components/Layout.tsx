@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Box, Typography, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import PeopleOutlineRoundedIcon from '@mui/icons-material/PeopleOutlineRounded';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import { Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, typography } from '../theme';
 
@@ -12,8 +13,11 @@ const SIDEBAR_WIDTH = 260;
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const isColaboradores = location.pathname.startsWith('/colaboradores');
+  const isDepartamentos = location.pathname.startsWith('/departamentos');
 
   const handleOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
@@ -44,24 +48,47 @@ export function Layout() {
             sx={{ height: 32, width: 'auto', objectFit: 'contain' }}
           />
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            py: 1.25,
-            px: 1.5,
-            borderRadius: 1,
-            bgcolor: colors.neutral.background,
-            color: colors.neutral.text,
-          }}
-        >
-          <PeopleOutlineRoundedIcon sx={{ fontSize: 22, color: colors.neutral.text }} />
-          <Typography variant="body1" sx={{ flex: 1, fontWeight: typography.fontWeight.medium }}>
-            Colaboradores
-          </Typography>
-          <ChevronRightRoundedIcon sx={{ fontSize: 20, color: colors.secondary.main }} />
-        </Box>
+        <NavLink to="/colaboradores" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              py: 1.25,
+              px: 1.5,
+              borderRadius: 1,
+              bgcolor: isColaboradores ? colors.neutral.backgroundMuted : 'transparent',
+              color: colors.neutral.text,
+            }}
+          >
+            <PeopleOutlineRoundedIcon sx={{ fontSize: 22, color: colors.neutral.text }} />
+            <Typography variant="body1" sx={{ flex: 1, fontWeight: typography.fontWeight.medium }}>
+              Colaboradores
+            </Typography>
+            <ChevronRightRoundedIcon sx={{ fontSize: 20, color: colors.secondary.main }} />
+          </Box>
+        </NavLink>
+        <NavLink to="/departamentos" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              py: 1.25,
+              px: 1.5,
+              mt: 0.5,
+              borderRadius: 1,
+              bgcolor: isDepartamentos ? colors.neutral.backgroundMuted : 'transparent',
+              color: colors.neutral.text,
+            }}
+          >
+            <BusinessOutlinedIcon sx={{ fontSize: 22, color: colors.neutral.text }} />
+            <Typography variant="body1" sx={{ flex: 1, fontWeight: typography.fontWeight.medium }}>
+              Departamentos
+            </Typography>
+            <ChevronRightRoundedIcon sx={{ fontSize: 20, color: colors.secondary.main }} />
+          </Box>
+        </NavLink>
       </Box>
 
       <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>

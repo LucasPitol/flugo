@@ -9,6 +9,8 @@ import type {
   CreateDepartamentoInput,
   UpdateDepartamentoInput,
 } from './departamentos/types';
+import type { Colaborador } from './colaboradores/types';
+import { updateColaborador } from './colaboradoresService';
 import { RepositoryError } from '../../back-end/data/errors/RepositoryError';
 
 function toDepartamento(dto: DepartamentoDTO): Departamento {
@@ -80,6 +82,57 @@ export async function criarDepartamento(input: CreateDepartamentoInput): Promise
   const dto = toCriarDTO(input);
   const result = await withTimeout(gateway.criar(dto), CREATE_TIMEOUT_MS, timeoutMsg);
   return toDepartamento(result);
+}
+
+/**
+ * Cria o departamento e atualiza o campo departamento dos colaboradores selecionados.
+ * Transação lógica: em caso de falha ao atualizar algum colaborador, reverte os já
+ * atualizados para o departamento original e exclui o departamento criado (rollback),
+ * garantindo que nenhum colaborador fique sem departamento ou referenciando departamento inexistente.
+ */
+export async function criarDepartamentoEAtualizarColaboradores(
+  input: CreateDepartamentoInput,
+  colaboradoresSelecionados: Colaborador[]
+): Promise<Departamento> {
+  const newDept = await criarDepartamento(input);
+  const idsToUpdate = new Set(input.colaboradoresIds ?? []);
+  const toUpdate = colaboradoresSelecionados.filter((c) => idsToUpdate.has(c.id));
+  if (toUpdate.length === 0) return newDept;
+
+  const updated: Colaborador[] = [];
+  try {
+    for (const c of toUpdate) {
+      await updateColaborador(c.id, {
+        nome: c.nome,
+        email: c.email,
+        departamento: newDept.nome,
+        status: c.status,
+        cargo: c.cargo,
+        dataAdmissao: c.dataAdmissao,
+        nivelHierarquico: c.nivelHierarquico,
+        gestorId: c.gestorId,
+        salarioBase: c.salarioBase,
+      });
+      updated.push(c);
+    }
+    return newDept;
+  } catch (err) {
+    for (const c of updated) {
+      await updateColaborador(c.id, {
+        nome: c.nome,
+        email: c.email,
+        departamento: c.departamento,
+        status: c.status,
+        cargo: c.cargo,
+        dataAdmissao: c.dataAdmissao,
+        nivelHierarquico: c.nivelHierarquico,
+        gestorId: c.gestorId,
+        salarioBase: c.salarioBase,
+      }).catch(() => {});
+    }
+    await deleteDepartamento(newDept.id).catch(() => {});
+    throw err;
+  }
 }
 
 export async function updateDepartamento(
