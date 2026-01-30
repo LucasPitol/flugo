@@ -7,6 +7,7 @@ import {
   toUserMessage,
 } from '../../../services/colaboradoresService';
 import type { ColaboradorDTO, AtualizarColaboradorDTO } from '../../../../back-end/domain/types/ColaboradorDTO';
+import type { ColaboradoresFilter } from '../../../../back-end/domain/types/ColaboradoresFilter';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,6 +43,15 @@ export function useColaboradores() {
   const [editToastMessage, setEditToastMessage] = useState('');
   const [confirmSingleDeleteOpen, setConfirmSingleDeleteOpen] = useState(false);
   const [deletingSingle, setDeletingSingle] = useState(false);
+  const [filters, setFilters] = useState<ColaboradoresFilter>({});
+
+  const onFilterChange = useCallback((next: Partial<ColaboradoresFilter>) => {
+    setFilters((prev) => ({ ...prev, ...next }));
+  }, []);
+
+  const onClearFilters = useCallback(() => {
+    setFilters({});
+  }, []);
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -202,6 +212,11 @@ export function useColaboradores() {
     load,
     toastOpen,
     setToastOpen,
+
+    // Filtros
+    filters,
+    onFilterChange,
+    onClearFilters,
 
     // Ordenação
     orderBy,
