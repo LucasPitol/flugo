@@ -11,6 +11,11 @@ import type {
   UpdateColaboradorInput,
   ColaboradoresFilter,
 } from '../../../services/colaboradores/types';
+import {
+  updateColaboradorSchema,
+  getFieldErrors,
+} from '../../../services/colaboradores/validation';
+import { formatBrCurrency, parseBrCurrency } from '../../../utils/formatBr';
 
 /**
  * Filtros híbridos (remoto + local):
@@ -21,16 +26,15 @@ import type {
  *   overfetch e mantém UX responsiva para MVP.
  */
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type OrderByKey = 'nome' | 'email' | 'departamento' | 'status';
 
 function compare(a: Colaborador, b: Colaborador, orderBy: OrderByKey): number {
   const va = a[orderBy];
   const vb = b[orderBy];
-  if (va < vb) return -1;
-  if (va > vb) return 1;
-  return 0;
+  const sa = String(va ?? '').toLowerCase();
+  const sb = String(vb ?? '').toLowerCase();
+  return sa.localeCompare(sb, 'pt-BR');
 }
 
 /** Aplica apenas filtros locais (name, email). Department é filtrado no backend. */
@@ -64,7 +68,21 @@ export function useColaboradores() {
   const [editEmail, setEditEmail] = useState('');
   const [editDepartamento, setEditDepartamento] = useState('');
   const [editStatus, setEditStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
-  const [editErrors, setEditErrors] = useState<{ nome?: string; email?: string; departamento?: string }>({});
+  const [editCargo, setEditCargo] = useState('');
+  const [editDataAdmissao, setEditDataAdmissao] = useState('');
+  const [editNivelHierarquico, setEditNivelHierarquico] = useState<string>('');
+  const [editGestorId, setEditGestorId] = useState('');
+  const [editSalarioBase, setEditSalarioBase] = useState<string>('');
+  const [editErrors, setEditErrors] = useState<{
+    nome?: string;
+    email?: string;
+    departamento?: string;
+    cargo?: string;
+    dataAdmissao?: string;
+    nivelHierarquico?: string;
+    gestorId?: string;
+    salarioBase?: string;
+  }>({});
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editToastOpen, setEditToastOpen] = useState(false);
   const [editToastMessage, setEditToastMessage] = useState('');
@@ -120,6 +138,16 @@ export function useColaboradores() {
     });
     return arr;
   }, [filteredColaboradores, orderBy, order]);
+
+  const gestores = useMemo(
+    () => colaboradores.filter((c) => c.nivelHierarquico === 'gestor'),
+    [colaboradores]
+  );
+
+  const gestoresForSelect = useMemo(() => {
+    if (!editingColaborador) return gestores;
+    return gestores.filter((g) => g.id !== editingColaborador.id);
+  }, [gestores, editingColaborador]);
 
   const toggleRow = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -186,6 +214,13 @@ export function useColaboradores() {
       setEditEmail(editingColaborador.email);
       setEditDepartamento(editingColaborador.departamento);
       setEditStatus(editingColaborador.status);
+      setEditCargo(editingColaborador.cargo ?? '');
+      setEditDataAdmissao(editingColaborador.dataAdmissao ?? '');
+      setEditNivelHierarquico(editingColaborador.nivelHierarquico ?? '');
+      setEditGestorId(editingColaborador.gestorId ?? '');
+      setEditSalarioBase(
+        editingColaborador.salarioBase != null ? formatBrCurrency(editingColaborador.salarioBase) : ''
+      );
       setEditErrors({});
     }
   }, [editingColaborador]);
@@ -198,24 +233,42 @@ export function useColaboradores() {
     if (!editSubmitting) setEditingColaborador(null);
   }, [editSubmitting]);
 
-  const validateEdit = useCallback((): boolean => {
-    const next: { nome?: string; email?: string; departamento?: string } = {};
-    if (!editNome.trim()) next.nome = 'Nome é obrigatório';
-    if (!editEmail.trim()) next.email = 'E-mail é obrigatório';
-    else if (!EMAIL_REGEX.test(editEmail.trim())) next.email = 'E-mail inválido';
-    if (!editDepartamento) next.departamento = 'Departamento é obrigatório';
-    setEditErrors(next);
-    return Object.keys(next).length === 0;
-  }, [editNome, editEmail, editDepartamento]);
-
-  const handleEditSubmit = useCallback(() => {
-    if (!editingColaborador || !validateEdit()) return;
-    const input: UpdateColaboradorInput = {
+  const validateEdit = useCallback((): UpdateColaboradorInput | null => {
+    const salarioNum = parseBrCurrency(editSalarioBase);
+    const payload = {
       nome: editNome.trim(),
       email: editEmail.trim(),
       departamento: editDepartamento,
       status: editStatus,
+      cargo: editCargo.trim(),
+      dataAdmissao: editDataAdmissao.trim(),
+      nivelHierarquico: editNivelHierarquico || undefined,
+      gestorId: editGestorId.trim() || undefined,
+      salarioBase: Number.isNaN(salarioNum) ? undefined : salarioNum,
     };
+    const result = updateColaboradorSchema.safeParse(payload);
+    if (!result.success) {
+      setEditErrors(getFieldErrors(result));
+      return null;
+    }
+    setEditErrors({});
+    return result.data;
+  }, [
+    editNome,
+    editEmail,
+    editDepartamento,
+    editStatus,
+    editCargo,
+    editDataAdmissao,
+    editNivelHierarquico,
+    editGestorId,
+    editSalarioBase,
+  ]);
+
+  const handleEditSubmit = useCallback(() => {
+    if (!editingColaborador) return;
+    const input = validateEdit();
+    if (!input) return;
     setEditSubmitting(true);
     updateColaborador(editingColaborador.id, input)
       .then(() => {
@@ -229,7 +282,7 @@ export function useColaboradores() {
         setEditToastOpen(true);
       })
       .finally(() => setEditSubmitting(false));
-  }, [editingColaborador, editNome, editEmail, editDepartamento, editStatus, validateEdit, load]);
+  }, [editingColaborador, validateEdit, load]);
 
   const openConfirmSingleDelete = useCallback(() => {
     setConfirmSingleDeleteOpen(true);
@@ -295,6 +348,8 @@ export function useColaboradores() {
 
     // Edição (drawer)
     editingColaborador,
+    gestoresForSelect,
+    gestoresLoading: loading,
     openEdit,
     closeEdit,
     editNome,
@@ -305,6 +360,16 @@ export function useColaboradores() {
     setEditDepartamento,
     editStatus,
     setEditStatus,
+    editCargo,
+    setEditCargo,
+    editDataAdmissao,
+    setEditDataAdmissao,
+    editNivelHierarquico,
+    setEditNivelHierarquico,
+    editGestorId,
+    setEditGestorId,
+    editSalarioBase,
+    setEditSalarioBase,
     editErrors,
     setEditErrors,
     editSubmitting,

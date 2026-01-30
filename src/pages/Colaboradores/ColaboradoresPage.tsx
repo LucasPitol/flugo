@@ -16,6 +16,7 @@ import { ColaboradoresFilters } from '../../components/colaboradores/Colaborador
 import { useColaboradores } from './hooks/useColaboradores';
 import { ColaboradoresTable } from './ColaboradoresTable';
 import { ColaboradorEditDrawer } from './ColaboradorEditDrawer';
+import { maskBrCurrencyInput } from '../../utils/formatBr';
 
 function activeFiltersCount(f: { name?: string; email?: string; department?: string }): number {
   return [f.name, f.email, f.department].filter(
@@ -46,6 +47,8 @@ export function ColaboradoresPage() {
     setToastBulkOpen,
     toastBulkMessage,
     editingColaborador,
+    gestoresForSelect,
+    gestoresLoading,
     openEdit,
     closeEdit,
     editNome,
@@ -56,6 +59,16 @@ export function ColaboradoresPage() {
     setEditDepartamento,
     editStatus,
     setEditStatus,
+    editCargo,
+    setEditCargo,
+    editDataAdmissao,
+    setEditDataAdmissao,
+    editNivelHierarquico,
+    setEditNivelHierarquico,
+    editGestorId,
+    setEditGestorId,
+    editSalarioBase,
+    setEditSalarioBase,
     editErrors,
     setEditErrors,
     editSubmitting,
@@ -207,6 +220,13 @@ export function ColaboradoresPage() {
         email={editEmail}
         departamento={editDepartamento}
         status={editStatus}
+        cargo={editCargo}
+        dataAdmissao={editDataAdmissao}
+        nivelHierarquico={editNivelHierarquico}
+        gestorId={editGestorId}
+        salarioBase={editSalarioBase}
+        gestores={gestoresForSelect}
+        gestoresLoading={gestoresLoading}
         errors={editErrors}
         submitting={editSubmitting}
         onClose={closeEdit}
@@ -223,6 +243,27 @@ export function ColaboradoresPage() {
           if (editErrors.departamento) setEditErrors((p) => ({ ...p, departamento: undefined }));
         }}
         onStatusChange={setEditStatus}
+        onCargoChange={(v) => {
+          setEditCargo(v);
+          if (editErrors.cargo) setEditErrors((p) => ({ ...p, cargo: undefined }));
+        }}
+        onDataAdmissaoChange={(v) => {
+          setEditDataAdmissao(v);
+          if (editErrors.dataAdmissao) setEditErrors((p) => ({ ...p, dataAdmissao: undefined }));
+        }}
+        onNivelHierarquicoChange={(v) => {
+          setEditNivelHierarquico(v);
+          if (v === 'gestor') setEditGestorId('');
+          setEditErrors((p) => ({ ...p, nivelHierarquico: undefined, gestorId: undefined }));
+        }}
+        onGestorIdChange={(v) => {
+          setEditGestorId(v);
+          if (editErrors.gestorId) setEditErrors((p) => ({ ...p, gestorId: undefined }));
+        }}
+        onSalarioBaseChange={(v) => {
+          setEditSalarioBase(maskBrCurrencyInput(v));
+          if (editErrors.salarioBase) setEditErrors((p) => ({ ...p, salarioBase: undefined }));
+        }}
         onSave={handleEditSubmit}
         onDeleteClick={openConfirmSingleDelete}
         confirmSingleDeleteOpen={confirmSingleDeleteOpen}

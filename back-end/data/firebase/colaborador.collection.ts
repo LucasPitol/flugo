@@ -10,7 +10,7 @@ import {
   updateDoc,
   deleteDoc,
   writeBatch,
-  type Timestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { firebaseApp } from './config';
 import type {
@@ -43,6 +43,13 @@ function dataAdmissaoToString(value: string | Timestamp | undefined): string | u
   if (value == null) return undefined;
   if (typeof value === 'string') return value;
   return (value as Timestamp).toDate?.()?.toISOString?.() ?? undefined;
+}
+
+/** Converte dataAdmissao (string ISO) para Timestamp ao persistir no Firestore. */
+function dataAdmissaoToTimestamp(value: string | undefined): Timestamp | undefined {
+  if (value == null || value.trim() === '') return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : Timestamp.fromDate(date);
 }
 
 function getFirestoreInstance() {
@@ -115,16 +122,21 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
   async criar(dto: CriarColaboradorDTO): Promise<ColaboradorDTO> {
     try {
       const colaboradoresRef = getColaboradoresRef();
+      const dataAdmissaoTimestamp = dataAdmissaoToTimestamp(dto.dataAdmissao);
+      const salarioBaseNum =
+        dto.salarioBase !== undefined && dto.salarioBase !== null
+          ? Number(dto.salarioBase)
+          : undefined;
       const payload: ColaboradorFirestore = {
         nome: dto.nome,
         email: dto.email,
         departamento: dto.departamento,
         status: dto.status,
-        ...(dto.cargo !== undefined && { cargo: dto.cargo }),
-        ...(dto.dataAdmissao !== undefined && { dataAdmissao: dto.dataAdmissao }),
+        ...(dto.cargo !== undefined && dto.cargo.trim() !== '' && { cargo: dto.cargo.trim() }),
+        ...(dataAdmissaoTimestamp !== undefined && { dataAdmissao: dataAdmissaoTimestamp }),
         ...(dto.nivelHierarquico !== undefined && { nivelHierarquico: dto.nivelHierarquico }),
-        ...(dto.gestorId !== undefined && { gestorId: dto.gestorId }),
-        ...(dto.salarioBase !== undefined && { salarioBase: dto.salarioBase }),
+        ...(dto.gestorId !== undefined && dto.gestorId.trim() !== '' && { gestorId: dto.gestorId.trim() }),
+        ...(salarioBaseNum !== undefined && !Number.isNaN(salarioBaseNum) && { salarioBase: salarioBaseNum }),
       };
       const docRef = await addDoc(colaboradoresRef, payload);
       return {
