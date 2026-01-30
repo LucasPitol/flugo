@@ -11,6 +11,7 @@ import {
   deleteDoc,
   writeBatch,
   Timestamp,
+  deleteField,
 } from 'firebase/firestore';
 import { firebaseApp } from './config';
 import type {
@@ -169,20 +170,35 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
           `Documento ${id} com formato inválido na coleção ${COLLECTION_NAME}`
         );
       }
-      const updates: Partial<ColaboradorFirestore> = {};
+      const updates: Record<string, unknown> = {};
       if (dto.nome !== undefined) updates.nome = dto.nome;
       if (dto.email !== undefined) updates.email = dto.email;
       if (dto.departamento !== undefined) updates.departamento = dto.departamento;
       if (dto.status !== undefined) updates.status = dto.status;
-      if (dto.cargo !== undefined) updates.cargo = dto.cargo;
-      if (dto.dataAdmissao !== undefined) updates.dataAdmissao = dto.dataAdmissao;
-      if (dto.nivelHierarquico !== undefined) updates.nivelHierarquico = dto.nivelHierarquico;
-      if (dto.gestorId !== undefined) updates.gestorId = dto.gestorId;
-      if (dto.salarioBase !== undefined) updates.salarioBase = dto.salarioBase;
-      if (Object.keys(updates).length > 0) {
-        await updateDoc(docRef, updates);
+      if (dto.cargo !== undefined) updates.cargo = dto.cargo.trim();
+      if (dto.dataAdmissao !== undefined) {
+        const ts = dataAdmissaoToTimestamp(dto.dataAdmissao);
+        if (ts !== undefined) updates.dataAdmissao = ts;
       }
-      return docToDTO(id, { ...data, ...updates });
+      if (dto.nivelHierarquico !== undefined) updates.nivelHierarquico = dto.nivelHierarquico;
+      if (dto.nivelHierarquico === 'gestor') {
+        updates.gestorId = deleteField();
+      } else if (dto.gestorId !== undefined) {
+        updates.gestorId = dto.gestorId.trim() || deleteField();
+      }
+      if (dto.salarioBase !== undefined) {
+        const num = Number(dto.salarioBase);
+        if (!Number.isNaN(num)) updates.salarioBase = num;
+      }
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(docRef, updates as Record<string, string | number | Timestamp | ReturnType<typeof deleteField>>);
+        const updatedSnap = await getDoc(docRef);
+        const updatedData = updatedSnap.exists() ? updatedSnap.data() : data;
+        if (assertColaboradorFirestore(updatedData)) {
+          return docToDTO(id, updatedData);
+        }
+      }
+      return docToDTO(id, data);
     } catch (e) {
       if (e instanceof RepositoryError) throw e;
       throw new RepositoryError('Erro ao atualizar colaborador', e);

@@ -49,14 +49,38 @@ O build sai em `dist/`. O preview serve o build localmente.
 ## Funcionalidades
 
 - **Login** (`/login`) e **Cadastro** (`/cadastro`): autenticação via Firebase Auth. Rotas privadas protegidas por `ProtectedRoute`.
-- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; efetivados ao clicar em "Aplicar filtros" — departamento vai para query no Firestore, nome/e-mail filtrados localmente; "Limpar" zera e refaz fetch); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (nome, e-mail, departamento, status; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
-- **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais), validação de e-mail, seleção de departamento e status; persistência no Firestore.
+- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; efetivados ao clicar em "Aplicar filtros" — departamento vai para query no Firestore, nome/e-mail filtrados localmente; "Limpar" zera e refaz fetch); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (dados básicos + campos profissionais; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
+- **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais). Etapa 1: nome, e-mail, departamento, ativar ao criar. Etapa 2: cargo, data de admissão, nível hierárquico, gestor responsável (quando nível ≠ gestor), salário base (máscara BR); validação com Zod; persistência no Firestore.
 - **404** (`/404`): página não encontrada.
 
 ## Arquitetura (front × back)
 
 - **UI não conhece domínio:** páginas, hooks, contexts e components em `src/` **não** importam `back-end/domain`. Contratos da UI ficam em **services** (tipos, inputs, filtros).
 - **Service é a fronteira:** apenas `src/services/*` pode importar `back-end/domain` e `back-end/interface`. O service mapeia DTOs do domínio para os tipos expostos à UI (e vice-versa).
+
+### Campos profissionais e modelo de dados (Colaboradores)
+
+Além dos campos básicos (nome, e-mail, departamento, status), o colaborador possui **campos profissionais** (todos opcionais no modelo para compatibilidade com registros antigos):
+
+| Campo             | Tipo     | Descrição                                      |
+|-------------------|----------|------------------------------------------------|
+| `cargo`           | string   | Cargo/função                                   |
+| `dataAdmissao`    | string   | Data de admissão (ISO no DTO; Timestamp no Firestore) |
+| `nivelHierarquico`| enum    | `junior` \| `pleno` \| `senior` \| `gestor`   |
+| `gestorId`        | string?  | ID do gestor responsável (ver regra abaixo)   |
+| `salarioBase`     | number   | Salário base (valor numérico)                 |
+
+**Regra do gestor responsável**
+
+- Se **nível hierárquico = gestor:** o campo "Gestor responsável" é desabilitado e o `gestorId` é limpo (não persistido). Um gestor não tem gestor responsável.
+- Se **nível ≠ gestor:** o campo "Gestor responsável" é obrigatório. O Select é populado com colaboradores cujo `nivelHierarquico === 'gestor'`. No modo edição, o próprio colaborador é excluído dessa lista (não pode ser gestor de si mesmo).
+- Ao trocar o nível para "Gestor", o `gestorId` é limpo na UI e, no update, o campo é removido do documento no Firestore (`deleteField()`).
+
+**Impacto no modelo e na persistência**
+
+- **DTO / tipos UI:** `ColaboradorDTO`, `Colaborador` (UI), `CreateColaboradorInput` e `UpdateColaboradorInput` incluem esses campos como opcionais (exceto nas validações de formulário, onde são obrigatórios conforme as regras acima).
+- **Firestore:** na escrita, `dataAdmissao` é normalizada para `Timestamp`; `salarioBase` para `number`; `cargo` e `gestorId` são gravados com `trim`. Na leitura, `Timestamp` é convertido para string ISO no DTO.
+- **Validação:** schema Zod em `src/services/colaboradores/validation.ts` (cargo, dataAdmissao, nivelHierarquico obrigatórios; gestorId obrigatório apenas quando nível ≠ gestor; salarioBase obrigatório e > 0).
 
 ### Filtros híbridos (Colaboradores)
 
@@ -104,8 +128,11 @@ flugo/
 │   │   │   └── types.ts                   # Contrato UI: AuthUser
 │   │   ├── authService.ts                 # login, register, logout, onAuthStateChanged (captura AuthError → AuthServiceError)
 │   │   ├── colaboradores/
-│   │   │   └── types.ts                   # Contratos UI: Colaborador, CreateColaboradorInput, UpdateColaboradorInput, ColaboradoresFilter
+│   │   │   ├── types.ts                   # Contratos UI: Colaborador, CreateColaboradorInput, UpdateColaboradorInput, ColaboradoresFilter
+│   │   │   └── validation.ts              # Schema Zod: campos profissionais, regra gestorId, getFieldErrors
 │   │   └── colaboradoresService.ts       # listar, criar, update, delete, bulkDelete (mapeia domain ↔ UI)
+│   ├── utils/
+│   │   └── formatBr.ts                    # formatBrCurrency, parseBrCurrency, maskBrCurrencyInput (padrão BR)
 │   ├── theme/
 │   │   ├── index.ts
 │   │   ├── theme.ts
