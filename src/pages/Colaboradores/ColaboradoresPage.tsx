@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton, AppSnackbar } from '../../components/ui';
@@ -63,18 +64,30 @@ export function ColaboradoresPage() {
       <PageHeader
         title="Colaboradores"
         action={
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {selectedIds.size > 0 && (
-              <AppButton
-                variant="outlined"
-                onClick={() => setConfirmOpen(true)}
-              >
-                Excluir selecionados
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {selectedIds.size > 0 ? (
+              <>
+                <Typography
+                  component="span"
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {selectedIds.size} selecionado{selectedIds.size !== 1 ? 's' : ''}
+                </Typography>
+                <AppButton
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  Excluir selecionados
+                </AppButton>
+              </>
+            ) : (
+              <AppButton variant="contained" onClick={() => navigate('/colaboradores/novo')}>
+                Novo Colaborador
               </AppButton>
             )}
-            <AppButton variant="contained" onClick={() => navigate('/colaboradores/novo')}>
-              Novo Colaborador
-            </AppButton>
           </Box>
         }
       />
