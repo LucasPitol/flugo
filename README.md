@@ -1,6 +1,6 @@
 # Flugo
 
-Aplicação de gestão de colaboradores: listagem em tabela, cadastro em etapas, edição e exclusão individual, com **Firebase Auth** (login/cadastro) e persistência em **Firebase Firestore**.
+App de gestão de colaboradores: listagem em tabela, cadastro em etapas, edição e exclusão individual, com **Firebase Auth** (login/cadastro) e persistência com **Firebase Firestore**.
 
 Acesse [https://flugo-six.vercel.app](https://flugo-six.vercel.app).
 
@@ -57,7 +57,6 @@ O build sai em `dist/`. O preview serve o build localmente.
 
 - **UI não conhece domínio:** páginas, hooks, contexts e components em `src/` **não** importam `back-end/domain`. Contratos da UI ficam em **services** (tipos, inputs, filtros).
 - **Service é a fronteira:** apenas `src/services/*` pode importar `back-end/domain` e `back-end/interface`. O service mapeia DTOs do domínio para os tipos expostos à UI (e vice-versa).
-- **Checklist:** Page / Hook / Context / Component → ❌ domain. Service / Gateway → ✅ domain.
 
 ### Filtros híbridos (Colaboradores)
 
@@ -126,8 +125,6 @@ flugo/
 │   │   │   ├── auth.ts
 │   │   │   ├── colaborador.collection.ts
 │   │   │   └── config.ts
-│   │   └── mocks/
-│   │       └── colaboradores.mock.ts
 │   ├── domain/
 │   │   ├── entities/
 │   │   │   └── Colaborador.ts

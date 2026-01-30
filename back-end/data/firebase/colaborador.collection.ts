@@ -10,6 +10,7 @@ import {
   updateDoc,
   deleteDoc,
   writeBatch,
+  type Timestamp,
 } from 'firebase/firestore';
 import { firebaseApp } from './config';
 import type {
@@ -18,19 +19,31 @@ import type {
   AtualizarColaboradorDTO,
   ListarColaboradoresFiltro,
   StatusColaborador,
+  NivelHierarquico,
 } from '../../domain/types/ColaboradorDTO';
 import type { ColaboradorRepository } from '../../domain/repositories/ColaboradorRepository';
 import { RepositoryError } from '../errors/RepositoryError';
 
 const COLLECTION_NAME = 'colaboradores';
 
-/** Schema do documento na coleção Firestore (evita DocumentData frouxo). */
+/** Schema do documento na coleção Firestore (campos profissionais opcionais para compatibilidade). */
 type ColaboradorFirestore = {
   nome: string;
   email: string;
   departamento: string;
   status: StatusColaborador;
+  cargo?: string;
+  dataAdmissao?: string | Timestamp;
+  nivelHierarquico?: NivelHierarquico;
+  gestorId?: string;
+  salarioBase?: number;
 };
+
+function dataAdmissaoToString(value: string | Timestamp | undefined): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === 'string') return value;
+  return (value as Timestamp).toDate?.()?.toISOString?.() ?? undefined;
+}
 
 function getFirestoreInstance() {
   if (!firebaseApp) {
@@ -56,6 +69,11 @@ function docToDTO(id: string, data: ColaboradorFirestore): ColaboradorDTO {
     email: data.email ?? '',
     departamento: data.departamento ?? '',
     status: data.status ?? 'Ativo',
+    ...(data.cargo !== undefined && { cargo: data.cargo }),
+    ...(data.dataAdmissao !== undefined && { dataAdmissao: dataAdmissaoToString(data.dataAdmissao) }),
+    ...(data.nivelHierarquico !== undefined && { nivelHierarquico: data.nivelHierarquico }),
+    ...(data.gestorId !== undefined && { gestorId: data.gestorId }),
+    ...(data.salarioBase !== undefined && { salarioBase: data.salarioBase }),
   };
 }
 
@@ -102,6 +120,11 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
         email: dto.email,
         departamento: dto.departamento,
         status: dto.status,
+        ...(dto.cargo !== undefined && { cargo: dto.cargo }),
+        ...(dto.dataAdmissao !== undefined && { dataAdmissao: dto.dataAdmissao }),
+        ...(dto.nivelHierarquico !== undefined && { nivelHierarquico: dto.nivelHierarquico }),
+        ...(dto.gestorId !== undefined && { gestorId: dto.gestorId }),
+        ...(dto.salarioBase !== undefined && { salarioBase: dto.salarioBase }),
       };
       const docRef = await addDoc(colaboradoresRef, payload);
       return {
@@ -110,6 +133,11 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
         email: dto.email,
         departamento: dto.departamento,
         status: dto.status,
+        ...(dto.cargo !== undefined && { cargo: dto.cargo }),
+        ...(dto.dataAdmissao !== undefined && { dataAdmissao: dto.dataAdmissao }),
+        ...(dto.nivelHierarquico !== undefined && { nivelHierarquico: dto.nivelHierarquico }),
+        ...(dto.gestorId !== undefined && { gestorId: dto.gestorId }),
+        ...(dto.salarioBase !== undefined && { salarioBase: dto.salarioBase }),
       };
     } catch (e) {
       throw new RepositoryError('Erro ao criar colaborador', e);
@@ -134,6 +162,11 @@ export class ColaboradorRepositoryFirestore implements ColaboradorRepository {
       if (dto.email !== undefined) updates.email = dto.email;
       if (dto.departamento !== undefined) updates.departamento = dto.departamento;
       if (dto.status !== undefined) updates.status = dto.status;
+      if (dto.cargo !== undefined) updates.cargo = dto.cargo;
+      if (dto.dataAdmissao !== undefined) updates.dataAdmissao = dto.dataAdmissao;
+      if (dto.nivelHierarquico !== undefined) updates.nivelHierarquico = dto.nivelHierarquico;
+      if (dto.gestorId !== undefined) updates.gestorId = dto.gestorId;
+      if (dto.salarioBase !== undefined) updates.salarioBase = dto.salarioBase;
       if (Object.keys(updates).length > 0) {
         await updateDoc(docRef, updates);
       }
