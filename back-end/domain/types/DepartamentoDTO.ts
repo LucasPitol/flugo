@@ -7,3 +7,20 @@ export interface DepartamentoDTO {
   descricao?: string;
   sigla?: string;
 }
+
+export interface CriarDepartamentoDTO {
+  nome: string;
+  gestorResponsavelId: string;
+  colaboradoresIds: string[];
+  descricao?: string;
+  sigla?: string;
+}
+
+/** Campos opcionais para atualização parcial de departamento. */
+export interface AtualizarDepartamentoDTO {
+  nome?: string;
+  gestorResponsavelId?: string;
+  colaboradoresIds?: string[];
+  descricao?: string;
+  sigla?: string;
+}
