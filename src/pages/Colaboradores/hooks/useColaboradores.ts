@@ -7,7 +7,7 @@ import {
   toUserMessage,
 } from '../../../services/colaboradoresService';
 import type { ColaboradorDTO, AtualizarColaboradorDTO } from '../../../../back-end/domain/types/ColaboradorDTO';
-import type { ColaboradoresFilter } from '../../../../back-end/domain/types/ColaboradoresFilter';
+import type { ColaboradoresFilter } from '../../../services/colaboradores/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,7 +46,7 @@ export function useColaboradores() {
   const [filters, setFilters] = useState<ColaboradoresFilter>({});
 
   const onFilterChange = useCallback((next: Partial<ColaboradoresFilter>) => {
-    setFilters((prev) => ({ ...prev, ...next }));
+    setFilters((prev: ColaboradoresFilter) => ({ ...prev, ...next }));
   }, []);
 
   const onClearFilters = useCallback(() => {

@@ -9,14 +9,23 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton, AppSnackbar } from '../../components/ui';
+import { ColaboradoresFilters } from '../../components/colaboradores/ColaboradoresFilters';
 import { useColaboradores } from './hooks/useColaboradores';
 import { ColaboradoresTable } from './ColaboradoresTable';
 import { ColaboradorEditDrawer } from './ColaboradorEditDrawer';
 
+function activeFiltersCount(f: { name?: string; email?: string; department?: string }): number {
+  return [f.name, f.email, f.department].filter(
+    (v) => v != null && String(v).trim() !== ''
+  ).length;
+}
+
 export function ColaboradoresPage() {
   const navigate = useNavigate();
+  const [filterOpen, setFilterOpen] = useState(false);
   const {
     loading,
     sortedColaboradores,
@@ -59,7 +68,13 @@ export function ColaboradoresPage() {
     editToastOpen,
     setEditToastOpen,
     editToastMessage,
+    filters,
+    onFilterChange,
+    onClearFilters,
   } = useColaboradores();
+
+  const activeCount = useMemo(() => activeFiltersCount(filters), [filters]);
+  const filtrosLabel = activeCount > 0 ? `Filtros (${activeCount})` : 'Filtros';
 
   return (
     <Box sx={{ maxWidth: 1200 }}>
@@ -98,9 +113,9 @@ export function ColaboradoresPage() {
                 <AppButton
                   variant="outlined"
                   startIcon={<SearchIcon />}
-                  onClick={() => {}}
+                  onClick={() => setFilterOpen(true)}
                 >
-                  Filtros
+                  {filtrosLabel}
                 </AppButton>
                 <AppButton
                   variant="contained"
@@ -113,6 +128,15 @@ export function ColaboradoresPage() {
             )}
           </Box>
         }
+      />
+
+      <ColaboradoresFilters
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        filters={filters}
+        onFilterChange={onFilterChange}
+        onClearFilters={onClearFilters}
+        onApply={() => setFilterOpen(false)}
       />
 
       <AppSnackbar
