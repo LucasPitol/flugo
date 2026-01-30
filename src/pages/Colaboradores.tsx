@@ -32,6 +32,7 @@ import {
   listarColaboradores,
   bulkDeleteColaboradores,
   updateColaborador,
+  deleteColaborador,
   toUserMessage,
 } from '../services/colaboradoresService';
 import type { ColaboradorDTO, AtualizarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
@@ -81,6 +82,8 @@ export function Colaboradores() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editToastOpen, setEditToastOpen] = useState(false);
   const [editToastMessage, setEditToastMessage] = useState('');
+  const [confirmSingleDeleteOpen, setConfirmSingleDeleteOpen] = useState(false);
+  const [deletingSingle, setDeletingSingle] = useState(false);
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -206,6 +209,25 @@ export function Colaboradores() {
       .finally(() => setEditSubmitting(false));
   }, [editingColaborador, editNome, editEmail, editDepartamento, editStatus, validateEdit, load]);
 
+  const handleSingleDelete = useCallback(() => {
+    if (!editingColaborador) return;
+    setDeletingSingle(true);
+    deleteColaborador(editingColaborador.id)
+      .then(() => {
+        setConfirmSingleDeleteOpen(false);
+        setEditingColaborador(null);
+        load();
+        setEditToastMessage('Colaborador excluído.');
+        setEditToastOpen(true);
+      })
+      .catch((err) => {
+        setConfirmSingleDeleteOpen(false);
+        setEditToastMessage(toUserMessage(err));
+        setEditToastOpen(true);
+      })
+      .finally(() => setDeletingSingle(false));
+  }, [editingColaborador, load]);
+
   return (
     <Box sx={{ maxWidth: 1200 }}>
       <PageHeader
@@ -273,6 +295,35 @@ export function Colaboradores() {
             color="error"
             onClick={handleBulkDelete}
             loading={deleting}
+          >
+            Excluir
+          </AppButton>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={confirmSingleDeleteOpen}
+        onClose={() => !deletingSingle && setConfirmSingleDeleteOpen(false)}
+        aria-labelledby="single-delete-dialog-title"
+        aria-describedby="single-delete-dialog-description"
+      >
+        <DialogTitle id="single-delete-dialog-title">Excluir colaborador</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="single-delete-dialog-description">
+            {editingColaborador
+              ? `Excluir ${editingColaborador.nome}? Essa ação não pode ser desfeita.`
+              : ''}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton onClick={() => setConfirmSingleDeleteOpen(false)} disabled={deletingSingle}>
+            Cancelar
+          </AppButton>
+          <AppButton
+            variant="contained"
+            color="error"
+            onClick={handleSingleDelete}
+            loading={deletingSingle}
           >
             Excluir
           </AppButton>
@@ -367,13 +418,23 @@ export function Colaboradores() {
               sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
             />
           </Box>
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-            <AppButton variant="text" onClick={closeEdit} disabled={editSubmitting}>
-              Cancelar
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between', mt: 3 }}>
+            <AppButton
+              variant="text"
+              color="error"
+              onClick={() => setConfirmSingleDeleteOpen(true)}
+              disabled={editSubmitting || deletingSingle}
+            >
+              Excluir
             </AppButton>
-            <AppButton variant="contained" onClick={handleEditSubmit} loading={editSubmitting}>
-              Salvar
-            </AppButton>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <AppButton variant="text" onClick={closeEdit} disabled={editSubmitting}>
+                Cancelar
+              </AppButton>
+              <AppButton variant="contained" onClick={handleEditSubmit} loading={editSubmitting}>
+                Salvar
+              </AppButton>
+            </Box>
           </Box>
         </Box>
       </Drawer>
