@@ -1,6 +1,6 @@
 # Flugo
 
-Aplicação de gestão de colaboradores: listagem em tabela e cadastro em etapas, com persistência em **Firebase Firestore**.
+Aplicação de gestão de colaboradores: listagem em tabela, cadastro em etapas, edição e exclusão individual, com **Firebase Auth** (login/cadastro) e persistência em **Firebase Firestore**.
 
 Acesse [https://flugo-six.vercel.app](https://flugo-six.vercel.app).
 
@@ -8,7 +8,7 @@ Acesse [https://flugo-six.vercel.app](https://flugo-six.vercel.app).
 
 - **React 18** + **TypeScript** + **Vite**
 - **MUI** (Material UI) + **React Router**
-- **Firebase** (Firestore) para dados
+- **Firebase** (Auth + Firestore)
 
 ## Pré-requisitos
 
@@ -48,8 +48,10 @@ O build sai em `dist/`. O preview serve o build localmente.
 
 ## Funcionalidades
 
-- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail ou departamento; chips de status (Ativo/Inativo); botão “Novo Colaborador”.
+- **Login** (`/login`) e **Cadastro** (`/cadastro`): autenticação via Firebase Auth. Rotas privadas protegidas por `ProtectedRoute`.
+- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); botão “Novo Colaborador”; botão “Editar” por linha abre **drawer de edição** (formulário com nome, e-mail, departamento, status; Salvar / Cancelar). No drawer, botão **“Excluir”** abre confirmação; ao confirmar, chama o service de exclusão individual, fecha o drawer, atualiza a lista e exibe toast. Exclusão em massa via seleção (checkbox) e “Excluir selecionados”, com diálogo de confirmação.
 - **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais), validação de e-mail, seleção de departamento e status; persistência no Firestore.
+- **404** (`/404`): página não encontrada.
 
 ## Estrutura do projeto
 
@@ -60,17 +62,41 @@ flugo/
 │   └── logo2.png
 ├── src/
 │   ├── components/
-│   │   └── Layout.tsx          # Layout com sidebar e outlet
+│   │   ├── Layout.tsx           # Layout com sidebar e outlet
+│   │   ├── ProtectedRoute.tsx   # Proteção de rotas privadas
+│   │   └── ui/
+│   │       ├── AppButton.tsx
+│   │       ├── AppCard.tsx
+│   │       ├── AppSnackbar.tsx
+│   │       ├── EmptyState.tsx
+│   │       ├── PageHeader.tsx
+│   │       ├── StatusChip.tsx
+│   │       └── index.ts         # Exporta componentes do design system
+│   ├── contexts/
+│   │   └── AuthContext.tsx      # Estado de autenticação
 │   ├── pages/
-│   │   ├── Colaboradores.tsx   # Listagem e tabela
-│   │   └── NovoColaborador.tsx # Cadastro em steps
+│   │   ├── Cadastro.tsx
+│   │   ├── Colaboradores/
+│   │   │   ├── ColaboradoresPage.tsx   # Página: header, snackbars, diálogos
+│   │   │   ├── ColaboradoresTable.tsx  # Tabela com ordenação e seleção
+│   │   │   ├── ColaboradorEditDrawer.tsx   # Drawer de edição e exclusão única
+│   │   │   ├── hooks/
+│   │   │   │   └── useColaboradores.ts     # Estado e lógica da listagem/edição
+│   │   │   └── index.ts                    # Re-exporta Colaboradores
+│   │   ├── Login.tsx
+│   │   ├── NotFound.tsx
+│   │   └── NovoColaborador.tsx
 │   ├── services/
-│   │   └── colaboradoresService.ts   # Chama o gateway
+│   │   └── colaboradoresService.ts   # listar, criar, update, delete, bulkDelete
+│   ├── theme/
+│   │   ├── index.ts             # Exporta theme e tokens
+│   │   ├── theme.ts             # Tema MUI
+│   │   ├── tokens.ts            # Cores, tipografia, espaçamentos, etc.
+│   │   └── README.md            # Guia do design system
 │   ├── App.tsx
 │   ├── App.css
 │   ├── main.tsx
 │   ├── index.css
-│   ├── theme.ts                # Tema MUI
 │   └── vite-env.d.ts
 ├── back-end/
 │   ├── data/
@@ -94,7 +120,7 @@ flugo/
 │   │       └── ColaboradorDTO.ts
 │   └── interface/
 │       ├── AuthGateway.ts            # Gateway auth (Firebase Auth)
-│       └── ColaboradoresGateway.ts   # Gateway (usa repositório)
+│       └── ColaboradoresGateway.ts   # listar, criar, editar, excluir, excluirEmMassa
 ├── index.html
 ├── package.json
 ├── tsconfig.json
@@ -103,8 +129,6 @@ flugo/
 ├── vercel.json                  # Deploy na Vercel
 └── .env                         # Variáveis Firebase (não versionar)
 ```
-
-O front chama `colaboradoresService`, que usa `ColaboradoresGateway`; o gateway delega ao `ColaboradorRepository` (implementação Firestore em `colaborador.collection`). O `AuthGateway` expõe `signIn`, `signOut`, `getCurrentUser` e `onAuthStateChanged`, delegando ao `AuthRepository` (implementação Firebase Auth em `data/firebase/auth`).
 
 ## Deploy (Vercel)
 

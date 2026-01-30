@@ -73,7 +73,7 @@ export function Layout() {
             alignItems: 'center',
             justifyContent: 'flex-end',
             px: 2,
-            borderBottom: `1px solid ${colors.neutral.border}`,
+            borderBottom: `none`,
           }}
         >
           <IconButton
