@@ -17,16 +17,28 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Drawer,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
 import {
   listarColaboradores,
   bulkDeleteColaboradores,
+  updateColaborador,
   toUserMessage,
 } from '../services/colaboradoresService';
-import type { ColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
-import { colors, typography } from '../theme';
+import type { ColaboradorDTO, AtualizarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
+import { colors, typography, states } from '../theme';
+
+const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 import {
   PageHeader,
   AppButton,
@@ -60,6 +72,15 @@ export function Colaboradores() {
   const [deleting, setDeleting] = useState(false);
   const [toastBulkOpen, setToastBulkOpen] = useState(false);
   const [toastBulkMessage, setToastBulkMessage] = useState('');
+  const [editingColaborador, setEditingColaborador] = useState<ColaboradorDTO | null>(null);
+  const [editNome, setEditNome] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editDepartamento, setEditDepartamento] = useState('');
+  const [editStatus, setEditStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+  const [editErrors, setEditErrors] = useState<{ nome?: string; email?: string; departamento?: string }>({});
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editToastOpen, setEditToastOpen] = useState(false);
+  const [editToastMessage, setEditToastMessage] = useState('');
 
   const handleRequestSort = useCallback((key: OrderByKey) => {
     const isAsc = orderBy === key && order === 'asc';
@@ -134,6 +155,57 @@ export function Colaboradores() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (editingColaborador) {
+      setEditNome(editingColaborador.nome);
+      setEditEmail(editingColaborador.email);
+      setEditDepartamento(editingColaborador.departamento);
+      setEditStatus(editingColaborador.status);
+      setEditErrors({});
+    }
+  }, [editingColaborador]);
+
+  const openEdit = useCallback((row: ColaboradorDTO) => {
+    setEditingColaborador(row);
+  }, []);
+
+  const closeEdit = useCallback(() => {
+    if (!editSubmitting) setEditingColaborador(null);
+  }, [editSubmitting]);
+
+  const validateEdit = useCallback((): boolean => {
+    const next: { nome?: string; email?: string; departamento?: string } = {};
+    if (!editNome.trim()) next.nome = 'Nome é obrigatório';
+    if (!editEmail.trim()) next.email = 'E-mail é obrigatório';
+    else if (!EMAIL_REGEX.test(editEmail.trim())) next.email = 'E-mail inválido';
+    if (!editDepartamento) next.departamento = 'Departamento é obrigatório';
+    setEditErrors(next);
+    return Object.keys(next).length === 0;
+  }, [editNome, editEmail, editDepartamento]);
+
+  const handleEditSubmit = useCallback(() => {
+    if (!editingColaborador || !validateEdit()) return;
+    const dto: AtualizarColaboradorDTO = {
+      nome: editNome.trim(),
+      email: editEmail.trim(),
+      departamento: editDepartamento,
+      status: editStatus,
+    };
+    setEditSubmitting(true);
+    updateColaborador(editingColaborador.id, dto)
+      .then(() => {
+        load();
+        setEditingColaborador(null);
+        setEditToastMessage('Colaborador atualizado.');
+        setEditToastOpen(true);
+      })
+      .catch((err) => {
+        setEditToastMessage(toUserMessage(err));
+        setEditToastOpen(true);
+      })
+      .finally(() => setEditSubmitting(false));
+  }, [editingColaborador, editNome, editEmail, editDepartamento, editStatus, validateEdit, load]);
+
   return (
     <Box sx={{ maxWidth: 1200 }}>
       <PageHeader
@@ -172,6 +244,12 @@ export function Colaboradores() {
         message={toastBulkMessage}
       />
 
+      <AppSnackbar
+        open={editToastOpen}
+        onClose={() => setEditToastOpen(false)}
+        message={editToastMessage}
+      />
+
       <Dialog
         open={confirmOpen}
         onClose={() => !deleting && setConfirmOpen(false)}
@@ -200,6 +278,105 @@ export function Colaboradores() {
           </AppButton>
         </DialogActions>
       </Dialog>
+
+      <Drawer
+        anchor="right"
+        open={!!editingColaborador}
+        onClose={closeEdit}
+        slotProps={{
+          paper: { sx: { width: { xs: '100%', sm: 420 } } },
+        }}
+      >
+        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Typography variant="h6" sx={{ mb: 3 }}>
+            Editar colaborador
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, flex: 1 }}>
+            <TextField
+              label="Nome"
+              value={editNome}
+              onChange={(e) => {
+                setEditNome(e.target.value);
+                if (editErrors.nome) setEditErrors((p) => ({ ...p, nome: undefined }));
+              }}
+              fullWidth
+              variant="outlined"
+              required
+              error={!!editErrors.nome}
+              helperText={editErrors.nome}
+            />
+            <TextField
+              label="E-mail"
+              placeholder="e.g. john@gmail.com"
+              value={editEmail}
+              onChange={(e) => {
+                setEditEmail(e.target.value);
+                if (editErrors.email) setEditErrors((p) => ({ ...p, email: undefined }));
+              }}
+              fullWidth
+              variant="outlined"
+              type="email"
+              required
+              error={!!editErrors.email}
+              helperText={editErrors.email}
+            />
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              error={!!editErrors.departamento}
+            >
+              <InputLabel id="edit-departamento-label" shrink>
+                Departamento
+              </InputLabel>
+              <Select
+                labelId="edit-departamento-label"
+                value={editDepartamento}
+                label="Departamento"
+                onChange={(e) => {
+                  setEditDepartamento(e.target.value);
+                  if (editErrors.departamento) setEditErrors((p) => ({ ...p, departamento: undefined }));
+                }}
+                displayEmpty
+                renderValue={(v) => (v as string) || 'Selecione um departamento'}
+                sx={{
+                  bgcolor: states.input.backgroundMuted,
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: states.input.borderDefault },
+                }}
+              >
+                {DEPARTAMENTOS.map((d) => (
+                  <MenuItem key={d} value={d}>
+                    {d}
+                  </MenuItem>
+                ))}
+              </Select>
+              {editErrors.departamento && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {editErrors.departamento}
+                </Typography>
+              )}
+            </FormControl>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editStatus === 'Ativo'}
+                  onChange={(e) => setEditStatus(e.target.checked ? 'Ativo' : 'Inativo')}
+                />
+              }
+              label="Ativo"
+              sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
+            <AppButton variant="text" onClick={closeEdit} disabled={editSubmitting}>
+              Cancelar
+            </AppButton>
+            <AppButton variant="contained" onClick={handleEditSubmit} loading={editSubmitting}>
+              Salvar
+            </AppButton>
+          </Box>
+        </Box>
+      </Drawer>
 
       <AppCard sx={{ overflow: 'hidden' }}>
         <TableContainer>
@@ -256,6 +433,9 @@ export function Colaboradores() {
                     Status
                   </TableSortLabel>
                 </TableCell>
+                <TableCell align="right" sx={{ width: 120 }}>
+                  Ações
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -278,11 +458,12 @@ export function Colaboradores() {
                     <TableCell sx={{ py: 2 }}>
                       <Skeleton variant="rounded" width={64} height={24} />
                     </TableCell>
+                    <TableCell sx={{ py: 2 }} />
                   </TableRow>
                 ))
               ) : colaboradores.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} sx={{ borderBottom: 'none', p: 0, verticalAlign: 'top' }}>
+                  <TableCell colSpan={6} sx={{ borderBottom: 'none', p: 0, verticalAlign: 'top' }}>
                     <EmptyState
                       message="Nenhum colaborador cadastrado."
                       description='Clique em "Novo Colaborador" para adicionar o primeiro.'
@@ -326,6 +507,15 @@ export function Colaboradores() {
                         label={row.status}
                         variant={row.status === 'Ativo' ? 'success' : 'error'}
                       />
+                    </TableCell>
+                    <TableCell align="right" sx={{ py: 2 }}>
+                      <AppButton
+                        variant="text"
+                        size="small"
+                        onClick={() => openEdit(row)}
+                      >
+                        Editar
+                      </AppButton>
                     </TableCell>
                   </TableRow>
                 ))
