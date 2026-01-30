@@ -7,6 +7,8 @@ import {
   DialogActions,
   Typography,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton, AppSnackbar } from '../../components/ui';
 import { useColaboradores } from './hooks/useColaboradores';
@@ -64,7 +66,14 @@ export function ColaboradoresPage() {
       <PageHeader
         title="Colaboradores"
         action={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              '& .MuiButton-root': { minHeight: 40 },
+            }}
+          >
             {selectedIds.size > 0 ? (
               <>
                 <Typography
@@ -79,14 +88,28 @@ export function ColaboradoresPage() {
                   variant="outlined"
                   color="error"
                   onClick={() => setConfirmOpen(true)}
+                  sx={{ minHeight: 40 }}
                 >
                   Excluir selecionados
                 </AppButton>
               </>
             ) : (
-              <AppButton variant="contained" onClick={() => navigate('/colaboradores/novo')}>
-                Novo Colaborador
-              </AppButton>
+              <>
+                <AppButton
+                  variant="outlined"
+                  startIcon={<SearchIcon />}
+                  onClick={() => {}}
+                >
+                  Filtros
+                </AppButton>
+                <AppButton
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/colaboradores/novo')}
+                >
+                  Novo colaborador
+                </AppButton>
+              </>
             )}
           </Box>
         }
