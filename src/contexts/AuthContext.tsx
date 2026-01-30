@@ -7,10 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { createAuthGateway } from '../../back-end/interface/AuthGateway';
-import type { AuthUser } from '../../back-end/domain/types/AuthTypes';
-
-const authGateway = createAuthGateway();
+import type { AuthUser } from '../services/auth/types';
+import {
+  onAuthStateChanged,
+  login as authLogin,
+  register as authRegister,
+  logout as authLogout,
+} from '../services/authService';
 
 export interface AuthContextValue {
   user: AuthUser | null;
@@ -28,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = authGateway.onAuthStateChanged((nextUser) => {
+    const unsubscribe = onAuthStateChanged((nextUser) => {
       setUser(nextUser);
       setLoading(false);
     });
@@ -36,16 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    (email: string, password: string) => authGateway.signIn(email, password),
+    (email: string, password: string) => authLogin(email, password),
     []
   );
 
   const register = useCallback(
-    (email: string, password: string) => authGateway.signUp(email, password),
+    (email: string, password: string) => authRegister(email, password),
     []
   );
 
-  const logout = useCallback(() => authGateway.signOut(), []);
+  const logout = useCallback(() => authLogout(), []);
 
   const value = useMemo<AuthContextValue>(
     () => ({

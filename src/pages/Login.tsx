@@ -2,33 +2,31 @@ import { useState } from 'react';
 import { Box, TextField, Typography, Link } from '@mui/material';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AuthError } from '../../back-end/data/errors/AuthError';
+import { AuthServiceError } from '../services/auth/errors';
 import { colors, typography, borderRadius, shadows } from '../theme';
 import { AppButton, AppSnackbar } from '../components/ui';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function toLoginErrorMessage(err: unknown): string {
-  if (err instanceof AuthError && err.cause && typeof err.cause === 'object' && 'code' in err.cause) {
-    const code = (err.cause as { code?: string }).code;
-    switch (code) {
-      case 'auth/invalid-credential':
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
+  if (err instanceof AuthServiceError) {
+    switch (err.code) {
+      case 'invalid-credentials':
         return 'E-mail ou senha incorretos. Verifique e tente novamente.';
-      case 'auth/invalid-email':
+      case 'invalid-email':
         return 'E-mail inválido.';
-      case 'auth/too-many-requests':
+      case 'too-many-requests':
         return 'Muitas tentativas. Tente novamente mais tarde.';
-      case 'auth/network-request-failed':
+      case 'network-request-failed':
         return 'Erro de conexão. Verifique sua rede.';
-      case 'auth/user-disabled':
+      case 'user-disabled':
         return 'Esta conta foi desativada. Entre em contato com o suporte.';
-      case 'auth/operation-not-allowed':
+      case 'operation-not-allowed':
         return 'Login por e-mail/senha não está habilitado.';
+      default:
+        return err.message || 'Não foi possível entrar. Tente novamente.';
     }
   }
-  if (err instanceof AuthError && err.message) return err.message;
   if (err instanceof Error && err.message) return err.message;
   return 'Não foi possível entrar. Tente novamente.';
 }

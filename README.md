@@ -49,9 +49,15 @@ O build sai em `dist/`. O preview serve o build localmente.
 ## Funcionalidades
 
 - **Login** (`/login`) e **Cadastro** (`/cadastro`): autenticação via Firebase Auth. Rotas privadas protegidas por `ProtectedRoute`.
-- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); botão “Novo Colaborador”; botão “Editar” por linha abre **drawer de edição** (formulário com nome, e-mail, departamento, status; Salvar / Cancelar). No drawer, botão **“Excluir”** abre confirmação; ao confirmar, chama o service de exclusão individual, fecha o drawer, atualiza a lista e exibe toast. Exclusão em massa via seleção (checkbox) e “Excluir selecionados”, com diálogo de confirmação.
+- **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; Limpar / Aplicar); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (nome, e-mail, departamento, status; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
 - **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais), validação de e-mail, seleção de departamento e status; persistência no Firestore.
 - **404** (`/404`): página não encontrada.
+
+## Arquitetura (front × back)
+
+- **UI não conhece domínio:** páginas, hooks, contexts e components em `src/` **não** importam `back-end/domain`. Contratos da UI ficam em **services** (tipos, inputs, filtros).
+- **Service é a fronteira:** apenas `src/services/*` pode importar `back-end/domain` e `back-end/interface`. O service mapeia DTOs do domínio para os tipos expostos à UI (e vice-versa).
+- **Checklist:** Page / Hook / Context / Component → ❌ domain. Service / Gateway → ✅ domain.
 
 ## Estrutura do projeto
 
@@ -62,8 +68,10 @@ flugo/
 │   └── logo2.png
 ├── src/
 │   ├── components/
-│   │   ├── Layout.tsx           # Layout com sidebar e outlet
-│   │   ├── ProtectedRoute.tsx   # Proteção de rotas privadas
+│   │   ├── colaboradores/
+│   │   │   └── ColaboradoresFilters.tsx   # Drawer de filtros (nome, email, departamento)
+│   │   ├── Layout.tsx                     # Layout com sidebar e outlet
+│   │   ├── ProtectedRoute.tsx             # Proteção de rotas privadas
 │   │   └── ui/
 │   │       ├── AppButton.tsx
 │   │       ├── AppCard.tsx
@@ -71,28 +79,34 @@ flugo/
 │   │       ├── EmptyState.tsx
 │   │       ├── PageHeader.tsx
 │   │       ├── StatusChip.tsx
-│   │       └── index.ts         # Exporta componentes do design system
+│   │       └── index.ts                   # Exporta componentes do design system
 │   ├── contexts/
-│   │   └── AuthContext.tsx      # Estado de autenticação
+│   │   └── AuthContext.tsx                # Estado de autenticação (usa authService)
 │   ├── pages/
 │   │   ├── Cadastro.tsx
 │   │   ├── Colaboradores/
-│   │   │   ├── ColaboradoresPage.tsx   # Página: header, snackbars, diálogos
-│   │   │   ├── ColaboradoresTable.tsx  # Tabela com ordenação e seleção
-│   │   │   ├── ColaboradorEditDrawer.tsx   # Drawer de edição e exclusão única
+│   │   │   ├── ColaboradoresPage.tsx      # Página: header, filtros, snackbars, diálogos
+│   │   │   ├── ColaboradoresTable.tsx     # Tabela com ordenação e seleção
+│   │   │   ├── ColaboradorEditDrawer.tsx  # Drawer de edição e exclusão única
 │   │   │   ├── hooks/
-│   │   │   │   └── useColaboradores.ts     # Estado e lógica da listagem/edição
-│   │   │   └── index.ts                    # Re-exporta Colaboradores
+│   │   │   │   └── useColaboradores.ts    # Estado e lógica da listagem/edição/filtros
+│   │   │   └── index.ts
 │   │   ├── Login.tsx
 │   │   ├── NotFound.tsx
 │   │   └── NovoColaborador.tsx
 │   ├── services/
-│   │   └── colaboradoresService.ts   # listar, criar, update, delete, bulkDelete
+│   │   ├── auth/
+│   │   │   ├── errors.ts                  # AuthServiceError (UI não conhece AuthError de back-end/data)
+│   │   │   └── types.ts                   # Contrato UI: AuthUser
+│   │   ├── authService.ts                 # login, register, logout, onAuthStateChanged (captura AuthError → AuthServiceError)
+│   │   ├── colaboradores/
+│   │   │   └── types.ts                   # Contratos UI: Colaborador, CreateColaboradorInput, UpdateColaboradorInput, ColaboradoresFilter
+│   │   └── colaboradoresService.ts       # listar, criar, update, delete, bulkDelete (mapeia domain ↔ UI)
 │   ├── theme/
-│   │   ├── index.ts             # Exporta theme e tokens
-│   │   ├── theme.ts             # Tema MUI
-│   │   ├── tokens.ts            # Cores, tipografia, espaçamentos, etc.
-│   │   └── README.md            # Guia do design system
+│   │   ├── index.ts
+│   │   ├── theme.ts
+│   │   ├── tokens.ts
+│   │   └── README.md
 │   ├── App.tsx
 │   ├── App.css
 │   ├── main.tsx
@@ -104,9 +118,9 @@ flugo/
 │   │   │   ├── AuthError.ts
 │   │   │   └── RepositoryError.ts
 │   │   ├── firebase/
-│   │   │   ├── auth.ts                     # Repo Firebase Auth
-│   │   │   ├── colaborador.collection.ts   # Repo Firestore
-│   │   │   └── config.ts                   # Init Firebase
+│   │   │   ├── auth.ts
+│   │   │   ├── colaborador.collection.ts
+│   │   │   └── config.ts
 │   │   └── mocks/
 │   │       └── colaboradores.mock.ts
 │   ├── domain/
@@ -117,18 +131,23 @@ flugo/
 │   │   │   └── ColaboradorRepository.ts
 │   │   └── types/
 │   │       ├── AuthTypes.ts
-│   │       └── ColaboradorDTO.ts
+│   │       ├── ColaboradorDTO.ts
+│   │       └── ColaboradoresFilter.ts
 │   └── interface/
-│       ├── AuthGateway.ts            # Gateway auth (Firebase Auth)
-│       └── ColaboradoresGateway.ts   # listar, criar, editar, excluir, excluirEmMassa
+│       ├── AuthGateway.ts
+│       └── ColaboradoresGateway.ts
 ├── index.html
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.node.json
 ├── vite.config.ts
-├── vercel.json                  # Deploy na Vercel
-└── .env                         # Variáveis Firebase (não versionar)
+├── vercel.json
+└── .env
 ```
+
+### Observação sobre arquitetura
+
+- **`back-end/*`:** importado apenas por `src/services/*`. A UI (pages, hooks, contexts, components) não importa nada de `back-end/domain` nem de `back-end/data`. O authService captura `AuthError` da infraestrutura e lança `AuthServiceError` (camada de aplicação); Login e Cadastro usam apenas `AuthServiceError` de `src/services/auth/errors`. ✅
 
 ## Deploy (Vercel)
 

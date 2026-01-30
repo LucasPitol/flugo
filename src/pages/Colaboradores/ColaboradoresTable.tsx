@@ -15,21 +15,21 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import { AppCard, EmptyState, AppButton, StatusChip } from '../../components/ui';
 import { colors, typography } from '../../theme';
-import type { ColaboradorDTO } from '../../../back-end/domain/types/ColaboradorDTO';
+import type { Colaborador } from '../../services/colaboradores/types';
 import type { OrderByKey } from './hooks/useColaboradores';
 
 const SKELETON_ROWS = 6;
 
 export type ColaboradoresTableProps = {
   loading: boolean;
-  sortedColaboradores: ColaboradorDTO[];
+  sortedColaboradores: Colaborador[];
   selectedIds: Set<string>;
   orderBy: OrderByKey;
   order: 'asc' | 'desc';
   onRequestSort: (key: OrderByKey) => void;
   onToggleRow: (id: string) => void;
   onToggleSelectAll: () => void;
-  onEditRow: (row: ColaboradorDTO) => void;
+  onEditRow: (row: Colaborador) => void;
 };
 
 export function ColaboradoresTable({

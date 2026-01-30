@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { criarColaborador } from '../services/colaboradoresService';
-import type { CriarColaboradorDTO } from '../../back-end/domain/types/ColaboradorDTO';
+import type { CreateColaboradorInput } from '../services/colaboradores/types';
 import {
   Box,
   Typography,
@@ -71,14 +71,14 @@ export function NovoColaborador() {
     if (activeStep < STEPS.length - 1) {
       setActiveStep((prev) => prev + 1);
     } else {
-      const dto: CriarColaboradorDTO = {
+      const input: CreateColaboradorInput = {
         nome: nomeColaborador.trim(),
         email: emailColaborador.trim(),
         departamento: departamentoColaborador,
         status: ativarAoCriar ? 'Ativo' : 'Inativo',
       };
       setSubmitting(true);
-      criarColaborador(dto)
+      criarColaborador(input)
         .then(() => navigate('/colaboradores'))
         .catch(() => setToastOpen(true))
         .finally(() => setSubmitting(false));

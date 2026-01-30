@@ -6,14 +6,17 @@ import {
   deleteColaborador,
   toUserMessage,
 } from '../../../services/colaboradoresService';
-import type { ColaboradorDTO, AtualizarColaboradorDTO } from '../../../../back-end/domain/types/ColaboradorDTO';
-import type { ColaboradoresFilter } from '../../../services/colaboradores/types';
+import type {
+  Colaborador,
+  UpdateColaboradorInput,
+  ColaboradoresFilter,
+} from '../../../services/colaboradores/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type OrderByKey = 'nome' | 'email' | 'departamento' | 'status';
 
-function compare(a: ColaboradorDTO, b: ColaboradorDTO, orderBy: OrderByKey): number {
+function compare(a: Colaborador, b: Colaborador, orderBy: OrderByKey): number {
   const va = a[orderBy];
   const vb = b[orderBy];
   if (va < vb) return -1;
@@ -22,7 +25,7 @@ function compare(a: ColaboradorDTO, b: ColaboradorDTO, orderBy: OrderByKey): num
 }
 
 export function useColaboradores() {
-  const [colaboradores, setColaboradores] = useState<ColaboradorDTO[]>([]);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastOpen, setToastOpen] = useState(false);
   const [orderBy, setOrderBy] = useState<OrderByKey>('nome');
@@ -32,7 +35,7 @@ export function useColaboradores() {
   const [deleting, setDeleting] = useState(false);
   const [toastBulkOpen, setToastBulkOpen] = useState(false);
   const [toastBulkMessage, setToastBulkMessage] = useState('');
-  const [editingColaborador, setEditingColaborador] = useState<ColaboradorDTO | null>(null);
+  const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
   const [editNome, setEditNome] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editDepartamento, setEditDepartamento] = useState('');
@@ -136,7 +139,7 @@ export function useColaboradores() {
     }
   }, [editingColaborador]);
 
-  const openEdit = useCallback((row: ColaboradorDTO) => {
+  const openEdit = useCallback((row: Colaborador) => {
     setEditingColaborador(row);
   }, []);
 
@@ -156,14 +159,14 @@ export function useColaboradores() {
 
   const handleEditSubmit = useCallback(() => {
     if (!editingColaborador || !validateEdit()) return;
-    const dto: AtualizarColaboradorDTO = {
+    const input: UpdateColaboradorInput = {
       nome: editNome.trim(),
       email: editEmail.trim(),
       departamento: editDepartamento,
       status: editStatus,
     };
     setEditSubmitting(true);
-    updateColaborador(editingColaborador.id, dto)
+    updateColaborador(editingColaborador.id, input)
       .then(() => {
         load();
         setEditingColaborador(null);

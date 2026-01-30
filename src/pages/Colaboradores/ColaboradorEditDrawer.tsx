@@ -17,13 +17,13 @@ import {
 } from '@mui/material';
 import { AppButton } from '../../components/ui';
 import { colors, states } from '../../theme';
-import type { ColaboradorDTO } from '../../../back-end/domain/types/ColaboradorDTO';
+import type { Colaborador } from '../../services/colaboradores/types';
 
 const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
 
 export type ColaboradorEditDrawerProps = {
   open: boolean;
-  colaborador: ColaboradorDTO | null;
+  colaborador: Colaborador | null;
   nome: string;
   email: string;
   departamento: string;

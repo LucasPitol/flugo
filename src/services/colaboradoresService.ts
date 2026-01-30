@@ -4,7 +4,24 @@ import type {
   CriarColaboradorDTO,
   AtualizarColaboradorDTO,
 } from '../../back-end/domain/types/ColaboradorDTO';
+import type {
+  Colaborador,
+  CreateColaboradorInput,
+  UpdateColaboradorInput,
+} from './colaboradores/types';
 import { RepositoryError } from '../../back-end/data/errors/RepositoryError';
+
+function toColaborador(dto: ColaboradorDTO): Colaborador {
+  return { ...dto };
+}
+
+function toCriarDTO(input: CreateColaboradorInput): CriarColaboradorDTO {
+  return { ...input };
+}
+
+function toAtualizarDTO(input: UpdateColaboradorInput): AtualizarColaboradorDTO {
+  return { ...input };
+}
 
 const gateway = createColaboradoresGateway();
 
@@ -34,25 +51,30 @@ function toUserMessage(err: unknown): string {
   return 'Ocorreu um erro inesperado. Tente novamente.';
 }
 
-export async function listarColaboradores(): Promise<ColaboradorDTO[]> {
+export async function listarColaboradores(): Promise<Colaborador[]> {
   const timeoutMsg =
     'Tempo esgotado ao carregar os colaboradores.' + FIREBASE_ENV_HINT;
-  return withTimeout(gateway.listar(), LIST_TIMEOUT_MS, timeoutMsg);
+  const list = await withTimeout(gateway.listar(), LIST_TIMEOUT_MS, timeoutMsg);
+  return list.map(toColaborador);
 }
 
-export async function criarColaborador(dto: CriarColaboradorDTO): Promise<ColaboradorDTO> {
+export async function criarColaborador(input: CreateColaboradorInput): Promise<Colaborador> {
   const timeoutMsg =
     'Tempo esgotado ao salvar.' + FIREBASE_ENV_HINT;
-  return withTimeout(gateway.criar(dto), CREATE_TIMEOUT_MS, timeoutMsg);
+  const dto = toCriarDTO(input);
+  const result = await withTimeout(gateway.criar(dto), CREATE_TIMEOUT_MS, timeoutMsg);
+  return toColaborador(result);
 }
 
 export async function updateColaborador(
   id: string,
-  dto: AtualizarColaboradorDTO
-): Promise<ColaboradorDTO> {
+  input: UpdateColaboradorInput
+): Promise<Colaborador> {
   const timeoutMsg =
     'Tempo esgotado ao atualizar.' + FIREBASE_ENV_HINT;
-  return withTimeout(gateway.editar(id, dto), MUTATION_TIMEOUT_MS, timeoutMsg);
+  const dto = toAtualizarDTO(input);
+  const result = await withTimeout(gateway.editar(id, dto), MUTATION_TIMEOUT_MS, timeoutMsg);
+  return toColaborador(result);
 }
 
 export async function deleteColaborador(id: string): Promise<void> {
