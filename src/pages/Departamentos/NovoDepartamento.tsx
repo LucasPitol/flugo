@@ -193,7 +193,6 @@ export function NovoDepartamento() {
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
               <Chip
-                key={option.id}
                 label={option.nome}
                 size="small"
                 {...getTagProps({ index })}
