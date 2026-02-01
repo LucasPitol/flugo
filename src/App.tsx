@@ -17,6 +17,9 @@ const NovoColaborador = lazy(() =>
 const NovoDepartamento = lazy(() =>
   import('./pages/Departamentos/NovoDepartamento').then((m) => ({ default: m.NovoDepartamento }))
 );
+const EditarDepartamento = lazy(() =>
+  import('./pages/Departamentos/EditarDepartamento').then((m) => ({ default: m.EditarDepartamento }))
+);
 
 function PageFallback() {
   return (
@@ -88,6 +91,7 @@ function App() {
                     <Route path="colaboradores/novo" element={<NovoColaborador />} />
                     <Route path="departamentos" element={<Departamentos />} />
                     <Route path="departamentos/novo" element={<NovoDepartamento />} />
+                    <Route path="departamentos/:id/editar" element={<EditarDepartamento />} />
                     <Route path="*" element={<Navigate to="/404" replace />} />
                   </Route>
                 </Route>

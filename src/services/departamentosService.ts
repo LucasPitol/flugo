@@ -146,6 +146,92 @@ export async function updateDepartamento(
   return toDepartamento(result);
 }
 
+/**
+ * Atualiza o departamento e sincroniza o campo departamento dos colaboradores:
+ * - Colaboradores adicionados passam a ter departamento = nome do departamento atualizado.
+ * - Colaboradores removidos são transferidos para outro departamento (destino informado).
+ * Colaborador não pode existir sem departamento.
+ */
+export async function updateDepartamentoEAtualizarColaboradores(
+  id: string,
+  input: UpdateDepartamentoInput,
+  departamentoAtual: Departamento,
+  colaboradoresPorId: Map<string, Colaborador>,
+  departamentoDestinoRemovidos: string
+): Promise<Departamento> {
+  const newIds = new Set(input.colaboradoresIds ?? departamentoAtual.colaboradoresIds);
+  const oldIds = new Set(departamentoAtual.colaboradoresIds);
+  const addedIds = [...newIds].filter((cid) => !oldIds.has(cid));
+  const removedIds = [...oldIds].filter((cid) => !newIds.has(cid));
+
+  const updated = await updateDepartamento(id, input);
+
+  const toAdd = addedIds
+    .map((cid) => colaboradoresPorId.get(cid))
+    .filter((c): c is Colaborador => c != null);
+  const toRemove = removedIds
+    .map((cid) => colaboradoresPorId.get(cid))
+    .filter((c): c is Colaborador => c != null);
+
+  const previousDepartamentoByColabId = new Map<string, string>();
+  toAdd.forEach((c) => previousDepartamentoByColabId.set(c.id, c.departamento));
+  toRemove.forEach((c) => previousDepartamentoByColabId.set(c.id, departamentoAtual.nome));
+
+  const updatedColaboradores: Colaborador[] = [];
+  try {
+    for (const c of toAdd) {
+      await updateColaborador(c.id, {
+        nome: c.nome,
+        email: c.email,
+        departamento: updated.nome,
+        status: c.status,
+        cargo: c.cargo,
+        dataAdmissao: c.dataAdmissao,
+        nivelHierarquico: c.nivelHierarquico,
+        gestorId: c.gestorId,
+        salarioBase: c.salarioBase,
+      });
+      updatedColaboradores.push(c);
+    }
+    for (const c of toRemove) {
+      await updateColaborador(c.id, {
+        nome: c.nome,
+        email: c.email,
+        departamento: departamentoDestinoRemovidos,
+        status: c.status,
+        cargo: c.cargo,
+        dataAdmissao: c.dataAdmissao,
+        nivelHierarquico: c.nivelHierarquico,
+        gestorId: c.gestorId,
+        salarioBase: c.salarioBase,
+      });
+      updatedColaboradores.push(c);
+    }
+    return updated;
+  } catch (err) {
+    for (const c of updatedColaboradores) {
+      const restoreDept = previousDepartamentoByColabId.get(c.id) ?? c.departamento;
+      await updateColaborador(c.id, {
+        nome: c.nome,
+        email: c.email,
+        departamento: restoreDept,
+        status: c.status,
+        cargo: c.cargo,
+        dataAdmissao: c.dataAdmissao,
+        nivelHierarquico: c.nivelHierarquico,
+        gestorId: c.gestorId,
+        salarioBase: c.salarioBase,
+      }).catch(() => {});
+    }
+    await updateDepartamento(id, {
+      nome: departamentoAtual.nome,
+      gestorResponsavelId: departamentoAtual.gestorResponsavelId,
+      colaboradoresIds: departamentoAtual.colaboradoresIds,
+    }).catch(() => {});
+    throw err;
+  }
+}
+
 export async function deleteDepartamento(id: string): Promise<void> {
   const timeoutMsg =
     'Tempo esgotado ao excluir departamento.' + FIREBASE_ENV_HINT;

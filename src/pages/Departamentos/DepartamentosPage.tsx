@@ -104,7 +104,7 @@ export function DepartamentosPage() {
         loading={loading}
         departamentos={departamentos}
         gestorNames={gestorNames}
-        onEditRow={() => {}}
+        onEditRow={(row) => navigate(`/departamentos/${row.id}/editar`)}
         onDeleteRow={openConfirmDelete}
       />
     </Box>
