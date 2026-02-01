@@ -86,9 +86,9 @@ export async function criarDepartamento(input: CreateDepartamentoInput): Promise
 
 /**
  * Cria o departamento e atualiza o campo departamento dos colaboradores selecionados.
- * Transação lógica: em caso de falha ao atualizar algum colaborador, reverte os já
- * atualizados para o departamento original e exclui o departamento criado (rollback),
- * garantindo que nenhum colaborador fique sem departamento ou referenciando departamento inexistente.
+ * Remove automaticamente cada colaborador do departamento anterior (transferência).
+ * Transação lógica: em caso de falha, reverte colaboradores e remoções nos depts anteriores
+ * e exclui o departamento criado (rollback), impedindo estado inválido (colaborador sem departamento).
  */
 export async function criarDepartamentoEAtualizarColaboradores(
   input: CreateDepartamentoInput,
@@ -114,6 +114,34 @@ export async function criarDepartamentoEAtualizarColaboradores(
         salarioBase: c.salarioBase,
       });
       updated.push(c);
+    }
+    const deptList = await listarDepartamentos();
+    const addedIdsSet = new Set(toUpdate.map((c) => c.id));
+    const previousDeptUpdates: { deptId: string; previousIds: string[] }[] = [];
+    try {
+      for (const prevDept of deptList) {
+        if (prevDept.id === newDept.id) continue;
+        const idsToRemove = toUpdate
+          .filter((c) => c.departamento === prevDept.nome)
+          .map((c) => c.id);
+        if (idsToRemove.length === 0) continue;
+        const newIds = prevDept.colaboradoresIds.filter(
+          (cid) => !addedIdsSet.has(cid)
+        );
+        if (newIds.length === prevDept.colaboradoresIds.length) continue;
+        previousDeptUpdates.push({
+          deptId: prevDept.id,
+          previousIds: prevDept.colaboradoresIds,
+        });
+        await updateDepartamento(prevDept.id, { colaboradoresIds: newIds });
+      }
+    } catch (removeErr) {
+      for (const { deptId, previousIds } of previousDeptUpdates) {
+        await updateDepartamento(deptId, { colaboradoresIds: previousIds }).catch(
+          () => {}
+        );
+      }
+      throw removeErr;
     }
     return newDept;
   } catch (err) {
@@ -148,21 +176,29 @@ export async function updateDepartamento(
 
 /**
  * Atualiza o departamento e sincroniza o campo departamento dos colaboradores:
- * - Colaboradores adicionados passam a ter departamento = nome do departamento atualizado.
- * - Colaboradores removidos são transferidos para outro departamento (destino informado).
- * Colaborador não pode existir sem departamento.
+ * - Colaboradores adicionados: departamento = nome do departamento atualizado e removidos
+ *   automaticamente do departamento anterior (transferência).
+ * - Colaboradores removidos: transferidos para o departamento de destino informado.
+ * Impede estado inválido: colaborador não pode existir sem departamento.
  */
 export async function updateDepartamentoEAtualizarColaboradores(
   id: string,
   input: UpdateDepartamentoInput,
   departamentoAtual: Departamento,
   colaboradoresPorId: Map<string, Colaborador>,
-  departamentoDestinoRemovidos: string
+  departamentoDestinoRemovidos: string,
+  todosDepartamentos: Departamento[]
 ): Promise<Departamento> {
   const newIds = new Set(input.colaboradoresIds ?? departamentoAtual.colaboradoresIds);
   const oldIds = new Set(departamentoAtual.colaboradoresIds);
   const addedIds = [...newIds].filter((cid) => !oldIds.has(cid));
   const removedIds = [...oldIds].filter((cid) => !newIds.has(cid));
+
+  if (removedIds.length > 0 && !departamentoDestinoRemovidos.trim()) {
+    throw new Error(
+      'Selecione o departamento de destino para os colaboradores removidos. Colaborador não pode ficar sem departamento.'
+    );
+  }
 
   const updated = await updateDepartamento(id, input);
 
@@ -178,6 +214,8 @@ export async function updateDepartamentoEAtualizarColaboradores(
   toRemove.forEach((c) => previousDepartamentoByColabId.set(c.id, departamentoAtual.nome));
 
   const updatedColaboradores: Colaborador[] = [];
+  const previousDeptUpdates: { deptId: string; previousIds: string[] }[] = [];
+
   try {
     for (const c of toAdd) {
       await updateColaborador(c.id, {
@@ -192,6 +230,23 @@ export async function updateDepartamentoEAtualizarColaboradores(
         salarioBase: c.salarioBase,
       });
       updatedColaboradores.push(c);
+    }
+    const addedIdsSet = new Set(toAdd.map((c) => c.id));
+    for (const prevDept of todosDepartamentos) {
+      if (prevDept.id === id) continue;
+      const toRemoveFromPrev = toAdd.filter(
+        (c) => c.departamento === prevDept.nome
+      );
+      if (toRemoveFromPrev.length === 0) continue;
+      const newIdsPrev = prevDept.colaboradoresIds.filter(
+        (cid) => !addedIdsSet.has(cid)
+      );
+      if (newIdsPrev.length === prevDept.colaboradoresIds.length) continue;
+      previousDeptUpdates.push({
+        deptId: prevDept.id,
+        previousIds: prevDept.colaboradoresIds,
+      });
+      await updateDepartamento(prevDept.id, { colaboradoresIds: newIdsPrev });
     }
     for (const c of toRemove) {
       await updateColaborador(c.id, {
@@ -209,6 +264,11 @@ export async function updateDepartamentoEAtualizarColaboradores(
     }
     return updated;
   } catch (err) {
+    for (const { deptId, previousIds } of previousDeptUpdates) {
+      await updateDepartamento(deptId, { colaboradoresIds: previousIds }).catch(
+        () => {}
+      );
+    }
     for (const c of updatedColaboradores) {
       const restoreDept = previousDepartamentoByColabId.get(c.id) ?? c.departamento;
       await updateColaborador(c.id, {

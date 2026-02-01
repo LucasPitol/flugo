@@ -131,11 +131,16 @@ export function EditarDepartamento() {
       input,
       departamento,
       colaboradoresPorId,
-      destino
+      destino,
+      departamentos
     )
       .then(() => navigate('/departamentos'))
-      .catch(() => {
-        setToastMessage('Não foi possível salvar as alterações. Tente novamente.');
+      .catch((err) => {
+        setToastMessage(
+          err instanceof Error && err.message
+            ? err.message
+            : 'Não foi possível salvar as alterações. Tente novamente.'
+        );
         setToastOpen(true);
       })
       .finally(() => setSubmitting(false));
@@ -264,8 +269,9 @@ export function EditarDepartamento() {
           Colaboradores vinculados
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-          Adicione ou remova colaboradores da lista. Removidos serão transferidos para o departamento
-          de destino escolhido abaixo.
+          Adicione ou remova colaboradores da lista. Ao adicionar, o colaborador é removido
+          automaticamente do departamento anterior. Ao remover, é obrigatório escolher o departamento
+          de destino — colaborador não pode ficar sem departamento.
         </Typography>
         <Autocomplete
           multiple
@@ -375,7 +381,7 @@ export function EditarDepartamento() {
             )}
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
               {colaboradoresRemovidosCount} colaborador(es) será(ão) transferido(s) para o
-              departamento selecionado.
+              departamento selecionado. Obrigatório para impedir estado inválido (sem departamento).
             </Typography>
           </FormControl>
         )}
