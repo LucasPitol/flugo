@@ -6,6 +6,9 @@ import {
   deleteColaborador,
   toUserMessage,
 } from '../../../services/colaboradoresService';
+import { updateColaboradorESincronizarDepartamentos } from '../../../services/colaboradorDepartamentoSync';
+import { listarDepartamentos } from '../../../services/departamentosService';
+import type { Departamento } from '../../../services/departamentos/types';
 import type {
   Colaborador,
   UpdateColaboradorInput,
@@ -88,6 +91,7 @@ export function useColaboradores() {
   const [editToastMessage, setEditToastMessage] = useState('');
   const [confirmSingleDeleteOpen, setConfirmSingleDeleteOpen] = useState(false);
   const [deletingSingle, setDeletingSingle] = useState(false);
+  const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [filters, setFilters] = useState<ColaboradoresFilter>({});
   const [appliedFilters, setAppliedFilters] = useState<ColaboradoresFilter>({});
 
@@ -183,6 +187,12 @@ export function useColaboradores() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    listarDepartamentos()
+      .then(setDepartamentos)
+      .catch(() => setDepartamentos([]));
+  }, []);
+
   const handleBulkDelete = useCallback(() => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
@@ -270,7 +280,16 @@ export function useColaboradores() {
     const input = validateEdit();
     if (!input) return;
     setEditSubmitting(true);
-    updateColaborador(editingColaborador.id, input)
+    const departamentoMudou =
+      input.departamento.trim() !== (editingColaborador.departamento ?? '').trim();
+    const save = departamentoMudou
+      ? updateColaboradorESincronizarDepartamentos(
+          editingColaborador.id,
+          input,
+          editingColaborador.departamento
+        )
+      : updateColaborador(editingColaborador.id, input);
+    save
       .then(() => {
         load();
         setEditingColaborador(null);
@@ -348,6 +367,7 @@ export function useColaboradores() {
 
     // Edição (drawer)
     editingColaborador,
+    departamentos,
     gestoresForSelect,
     gestoresLoading: loading,
     openEdit,

@@ -25,8 +25,6 @@ import { AppButton } from '../../components/ui';
 import { colors, states } from '../../theme';
 import type { Colaborador, NivelHierarquico } from '../../services/colaboradores/types';
 
-const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
-
 const NIVEIS_HIERARQUICOS: { value: NivelHierarquico; label: string }[] = [
   { value: 'junior', label: 'Júnior' },
   { value: 'pleno', label: 'Pleno' },
@@ -59,6 +57,8 @@ export type ColaboradorEditDrawerProps = {
   nivelHierarquico: string;
   gestorId: string;
   salarioBase: string;
+  /** Lista de departamentos cadastrados (nome) para o Select obrigatório. */
+  departamentos: { id: string; nome: string }[];
   gestores: GestorOption[];
   gestoresLoading: boolean;
   errors: ColaboradorEditDrawerErrors;
@@ -92,6 +92,7 @@ export function ColaboradorEditDrawer({
   nivelHierarquico,
   gestorId,
   salarioBase,
+  departamentos,
   gestores,
   gestoresLoading,
   errors,
@@ -114,6 +115,11 @@ export function ColaboradorEditDrawer({
   onConfirmSingleDelete,
   colaborador,
 }: ColaboradorEditDrawerProps) {
+  const departamentoNomes = departamentos.map((d) => d.nome);
+  const optionsIncluindoAtual =
+    departamento && !departamentoNomes.includes(departamento)
+      ? [departamento, ...departamentoNomes]
+      : departamentoNomes;
   return (
     <>
       <Drawer
@@ -161,21 +167,31 @@ export function ColaboradorEditDrawer({
                 label="Departamento"
                 onChange={(e) => onDepartamentoChange(e.target.value)}
                 displayEmpty
-                renderValue={(v) => (v as string) || 'Selecione um departamento'}
+                renderValue={(v) =>
+                  (v as string) ||
+                  (departamentoNomes.length === 0
+                    ? 'Nenhum departamento cadastrado'
+                    : 'Selecione um departamento')
+                }
                 sx={{
                   bgcolor: states.input.backgroundMuted,
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: states.input.borderDefault },
                 }}
               >
-                {DEPARTAMENTOS.map((d) => (
-                  <MenuItem key={d} value={d}>
-                    {d}
+                {optionsIncluindoAtual.map((nomeDept) => (
+                  <MenuItem key={nomeDept} value={nomeDept}>
+                    {nomeDept}
                   </MenuItem>
                 ))}
               </Select>
               {errors.departamento && (
                 <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
                   {errors.departamento}
+                </Typography>
+              )}
+              {departamentoNomes.length === 0 && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
+                  Cadastre departamentos em Departamentos para vincular o colaborador.
                 </Typography>
               )}
             </FormControl>

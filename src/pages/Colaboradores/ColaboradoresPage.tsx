@@ -47,6 +47,7 @@ export function ColaboradoresPage() {
     setToastBulkOpen,
     toastBulkMessage,
     editingColaborador,
+    departamentos,
     gestoresForSelect,
     gestoresLoading,
     openEdit,
@@ -225,6 +226,7 @@ export function ColaboradoresPage() {
         nivelHierarquico={editNivelHierarquico}
         gestorId={editGestorId}
         salarioBase={editSalarioBase}
+        departamentos={departamentos}
         gestores={gestoresForSelect}
         gestoresLoading={gestoresLoading}
         errors={editErrors}
