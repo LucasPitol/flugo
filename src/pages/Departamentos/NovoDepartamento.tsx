@@ -58,7 +58,13 @@ export function NovoDepartamento() {
     };
     setSubmitting(true);
     criarDepartamentoEAtualizarColaboradores(input, colaboradoresSelecionados)
-      .then(() => navigate('/departamentos'))
+      .then(() => {
+        const msg =
+          colaboradoresSelecionados.length > 0
+            ? `Departamento criado. ${colaboradoresSelecionados.length} colaborador(es) vinculado(s).`
+            : 'Departamento criado.';
+        navigate('/departamentos', { state: { successMessage: msg } });
+      })
       .catch(() => setToastOpen(true))
       .finally(() => setSubmitting(false));
   };
@@ -227,6 +233,7 @@ export function NovoDepartamento() {
         open={toastOpen}
         onClose={() => setToastOpen(false)}
         message="Não foi possível salvar o departamento. Tente novamente."
+        severity="error"
       />
     </Box>
   );

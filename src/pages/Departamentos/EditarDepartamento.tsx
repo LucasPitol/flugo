@@ -134,7 +134,13 @@ export function EditarDepartamento() {
       destino,
       departamentos
     )
-      .then(() => navigate('/departamentos'))
+      .then(() => {
+        const msg =
+          colaboradoresRemovidosCount > 0
+            ? `Departamento atualizado. ${colaboradoresRemovidosCount} colaborador(es) transferido(s).`
+            : 'Departamento atualizado.';
+        navigate('/departamentos', { state: { successMessage: msg } });
+      })
       .catch((err) => {
         setToastMessage(
           err instanceof Error && err.message
@@ -269,9 +275,7 @@ export function EditarDepartamento() {
           Colaboradores vinculados
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-          Adicione ou remova colaboradores da lista. Ao adicionar, o colaborador é removido
-          automaticamente do departamento anterior. Ao remover, é obrigatório escolher o departamento
-          de destino — colaborador não pode ficar sem departamento.
+          Adicione ou remova. Ao remover, escolha o departamento de destino (obrigatório).
         </Typography>
         <Autocomplete
           multiple
@@ -380,8 +384,7 @@ export function EditarDepartamento() {
               </Typography>
             )}
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
-              {colaboradoresRemovidosCount} colaborador(es) será(ão) transferido(s) para o
-              departamento selecionado. Obrigatório para impedir estado inválido (sem departamento).
+              {colaboradoresRemovidosCount} transferido(s) para o departamento selecionado.
             </Typography>
           </FormControl>
         )}
@@ -400,6 +403,7 @@ export function EditarDepartamento() {
         open={toastOpen}
         onClose={() => setToastOpen(false)}
         message={toastMessage}
+        severity="error"
       />
     </Box>
   );

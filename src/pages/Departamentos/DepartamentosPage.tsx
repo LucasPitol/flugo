@@ -7,19 +7,25 @@ import {
   DialogActions,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { PageHeader, AppButton, AppSnackbar } from '../../components/ui';
 import { useDepartamentos } from './hooks/useDepartamentos';
 import { DepartamentosTable } from './DepartamentosTable';
 
+type SuccessToastState = { message: string; severity: 'success' } | null;
+
 export function DepartamentosPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successToast, setSuccessToast] = useState<SuccessToastState>(null);
   const {
     departamentos,
     loading,
     toastOpen,
     setToastOpen,
     toastMessage,
+    toastSeverity,
     gestorNames,
     confirmDeleteOpen,
     departamentoToDelete,
@@ -30,6 +36,14 @@ export function DepartamentosPage() {
     handleDelete,
     load,
   } = useDepartamentos();
+
+  useEffect(() => {
+    const state = location.state as { successMessage?: string } | undefined;
+    if (state?.successMessage) {
+      setSuccessToast({ message: state.successMessage, severity: 'success' });
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   return (
     <Box sx={{ maxWidth: 1200 }}>
@@ -46,6 +60,7 @@ export function DepartamentosPage() {
         open={toastOpen}
         onClose={() => setToastOpen(false)}
         message={toastMessage}
+        severity={toastSeverity}
         action={
           toastMessage.includes('Tempo esgotado') || toastMessage.includes('não foi possível') ? (
             <AppButton color="inherit" size="small" onClick={() => { load(); setToastOpen(false); }}>
@@ -53,6 +68,13 @@ export function DepartamentosPage() {
             </AppButton>
           ) : undefined
         }
+      />
+
+      <AppSnackbar
+        open={successToast !== null}
+        onClose={() => setSuccessToast(null)}
+        message={successToast?.message}
+        severity="success"
       />
 
       <Dialog

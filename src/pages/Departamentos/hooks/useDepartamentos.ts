@@ -6,12 +6,14 @@ import {
 } from '../../../services/departamentosService';
 import { listarColaboradores } from '../../../services/colaboradoresService';
 import type { Departamento } from '../../../services/departamentos/types';
+import type { AppSnackbarSeverity } from '../../../components/ui/AppSnackbar';
 
 export function useDepartamentos() {
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState<AppSnackbarSeverity>('error');
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [departamentoToDelete, setDepartamentoToDelete] = useState<Departamento | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -31,6 +33,7 @@ export function useDepartamentos() {
       });
       setGestorNames(names);
     } catch (e) {
+      setToastSeverity('error');
       setToastMessage(toUserMessage(e));
       setToastOpen(true);
     } finally {
@@ -60,6 +63,7 @@ export function useDepartamentos() {
     if (hasColaboradores) {
       setConfirmDeleteOpen(false);
       setDepartamentoToDelete(null);
+      setToastSeverity('error');
       setToastMessage(
         'Não é possível excluir: o departamento ainda possui colaboradores. Transfira ou remova os colaboradores antes de excluir.'
       );
@@ -72,9 +76,11 @@ export function useDepartamentos() {
       setDepartamentos((prev) => prev.filter((d) => d.id !== departamentoToDelete.id));
       setConfirmDeleteOpen(false);
       setDepartamentoToDelete(null);
+      setToastSeverity('success');
       setToastMessage('Departamento excluído com sucesso.');
       setToastOpen(true);
     } catch (e) {
+      setToastSeverity('error');
       setToastMessage(toUserMessage(e));
       setToastOpen(true);
     } finally {
@@ -92,6 +98,7 @@ export function useDepartamentos() {
     toastOpen,
     setToastOpen,
     toastMessage,
+    toastSeverity,
     gestorNames,
     confirmDeleteOpen,
     departamentoToDelete,
