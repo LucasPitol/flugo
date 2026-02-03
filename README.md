@@ -51,7 +51,7 @@ O build sai em `dist/`. O preview serve o build localmente.
 - **Login** (`/login`) e **Cadastro** (`/cadastro`): autenticação via Firebase Auth. Rotas privadas protegidas por `ProtectedRoute`.
 - **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; efetivados ao clicar em "Aplicar filtros" — departamento vai para query no Firestore, nome/e-mail filtrados localmente; "Limpar" zera e refaz fetch); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (dados básicos + campos profissionais; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
 - **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais). Etapa 1: nome, e-mail, departamento, ativar ao criar. Etapa 2: cargo, data de admissão, nível hierárquico, gestor responsável (quando nível ≠ gestor), salário base (máscara BR); validação com Zod; persistência no Firestore.
-- **Departamentos** (`/departamentos`): listagem em tabela (nome, gestor responsável, nº de colaboradores); Novo departamento; Editar departamento (nome, gestor, colaboradores vinculados; adicionar/remover com destino obrigatório para removidos). Transferência de colaboradores entre departamentos (pela edição do departamento ou pela edição do colaborador). Exclusão só permitida quando não há colaboradores vinculados.
+- **Departamentos** (`/departamentos`): listagem em tabela (nome, gestor responsável opcional, nº de colaboradores); Novo departamento; Editar departamento (nome, gestor opcional, colaboradores vinculados; adicionar/remover com destino obrigatório para removidos). Transferência de colaboradores entre departamentos (pela edição do departamento ou pela edição do colaborador). Exclusão só permitida quando não há colaboradores vinculados.
 - **404** (`/404`): página não encontrada.
 
 ## Arquitetura (front × back)
@@ -71,8 +71,8 @@ O build sai em `dist/`. O preview serve o build localmente.
 - **Firestore:** na escrita, `dataAdmissao` é normalizada para `Timestamp`; `salarioBase` para `number`; `cargo` e `gestorId` são gravados com `trim`. Na leitura, `Timestamp` é convertido para string ISO no DTO.
 - **Validação:** schema Zod em `src/services/colaboradores/validation.ts` (cargo, dataAdmissao, nivelHierarquico obrigatórios; gestorId obrigatório apenas quando nível ≠ gestor; salarioBase obrigatório e > 0).
 
-- O **gestor responsável** é sempre um colaborador com `nivelHierarquico === 'gestor'`.
-- **Colaborador** possui campo `departamento` (string = nome do departamento). A consistência entre `colaborador.departamento` e `departamento.colaboradoresIds` é mantida em toda escrita (ver estratégia abaixo).
+- O **gestor responsável** do departamento é **opcional**: quando informado, é um colaborador com `nivelHierarquico === 'gestor'`. O departamento não é obrigado a ter gestor.
+- **Colaborador** possui campo `departamento` (string = nome do departamento). **Todo colaborador deve estar vinculado a um departamento** (não pode ficar sem). A consistência entre `colaborador.departamento` e `departamento.colaboradoresIds` é mantida em toda escrita (ver estratégia abaixo).
 
 **Regras de integridade**
 

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { criarColaborador, listarColaboradores } from '../services/colaboradoresService';
+import { listarDepartamentos } from '../services/departamentosService';
 import type { CreateColaboradorInput } from '../services/colaboradores/types';
 import type { NivelHierarquico } from '../services/colaboradores/types';
 import type { Colaborador } from '../services/colaboradores/types';
+import type { Departamento } from '../services/departamentos/types';
 import {
   createColaboradorSchema,
   getFieldErrors,
@@ -27,17 +30,14 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { type Dayjs } from 'dayjs';
 import 'dayjs/locale/pt-br';
-import { useNavigate } from 'react-router-dom';
 import { maskBrCurrencyInput, parseBrCurrency } from '../utils/formatBr';
 import { colors, typography, states } from '../theme';
-import { AppButton, AppSnackbar } from '../components/ui';
+import { AppButton, AppSnackbar, EmptyState } from '../components/ui';
 
 const STEPS = [
   { label: 'Infos Básicas', title: 'Informações Básicas' },
   { label: 'Infos Profissionais', title: 'Informações Profissionais' },
 ];
-
-const DEPARTAMENTOS = ['Design', 'TI', 'Marketing', 'Produto', 'RH', 'Financeiro'];
 
 const NIVEIS_HIERARQUICOS: { value: NivelHierarquico; label: string }[] = [
   { value: 'junior', label: 'Júnior' },
@@ -74,6 +74,8 @@ export function NovoColaborador() {
   const [toastOpen, setToastOpen] = useState(false);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [gestoresLoading, setGestoresLoading] = useState(true);
+  const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
+  const [departamentosLoading, setDepartamentosLoading] = useState(true);
 
   const gestores = colaboradores.filter((c) => c.nivelHierarquico === 'gestor');
 
@@ -85,6 +87,14 @@ export function NovoColaborador() {
       .finally(() => setGestoresLoading(false));
   }, []);
 
+  useEffect(() => {
+    setDepartamentosLoading(true);
+    listarDepartamentos()
+      .then(setDepartamentos)
+      .catch(() => setDepartamentos([]))
+      .finally(() => setDepartamentosLoading(false));
+  }, []);
+
   const progress = (activeStep / STEPS.length) * 100;
 
   const validateStep0 = () => {
@@ -93,6 +103,9 @@ export function NovoColaborador() {
     if (!emailColaborador.trim()) nextErrors.email = 'E-mail é obrigatório';
     else if (!EMAIL_REGEX.test(emailColaborador.trim())) nextErrors.email = 'E-mail inválido';
     if (!departamentoColaborador) nextErrors.departamento = 'Selecione o departamento.';
+    else if (!departamentos.some((d) => d.nome === departamentoColaborador)) {
+      nextErrors.departamento = 'Selecione um departamento cadastrado.';
+    }
     setErrors((prev) => ({ ...prev, ...nextErrors }));
     return Object.keys(nextErrors).length === 0;
   };
@@ -100,6 +113,14 @@ export function NovoColaborador() {
   const handleNext = () => {
     if (activeStep === 0 && !validateStep0()) return;
     if (activeStep === 1) {
+      if (!departamentos.some((d) => d.nome === departamentoColaborador)) {
+        setErrors((prev) => ({
+          ...prev,
+          departamento: 'Selecione um departamento cadastrado.',
+        }));
+        setActiveStep(0);
+        return;
+      }
       const salarioNum = parseBrCurrency(salarioBase);
       const payload = {
         nome: nomeColaborador.trim(),
@@ -233,77 +254,118 @@ export function NovoColaborador() {
           </Typography>
 
           {activeStep === 0 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              <TextField
-                label="Nome"
-                value={nomeColaborador}
-                onChange={(e) => {
-                  setNomeColaborador(e.target.value);
-                  if (errors.nome) setErrors((prev) => ({ ...prev, nome: undefined }));
-                }}
-                fullWidth
-                variant="outlined"
-                required
-                error={!!errors.nome}
-                helperText={errors.nome}
-              />
-              <TextField
-                label="E-mail"
-                placeholder="e.g. john@gmail.com"
-                value={emailColaborador}
-                onChange={(e) => {
-                  setEmailColaborador(e.target.value);
-                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-                }}
-                fullWidth
-                variant="outlined"
-                type="email"
-                required
-                error={!!errors.email}
-                helperText={errors.email}
-              />
-              <FormControl fullWidth variant="outlined" required error={!!errors.departamento}>
-                <InputLabel id="departamento-label" shrink>
-                  Departamento
-                </InputLabel>
-                <Select
-                  labelId="departamento-label"
-                  value={departamentoColaborador}
-                  label="Departamento"
-                  onChange={(e) => {
-                    setDepartamentoColaborador(e.target.value);
-                    if (errors.departamento) setErrors((prev) => ({ ...prev, departamento: undefined }));
-                  }}
-                  displayEmpty
-                  renderValue={(selected) => (selected as string) || 'Selecione um departamento'}
-                  sx={{
-                    bgcolor: states.input.backgroundMuted,
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: states.input.borderDefault },
-                  }}
-                >
-                  {DEPARTAMENTOS.map((d) => (
-                    <MenuItem key={d} value={d}>
-                      {d}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.departamento && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                    {errors.departamento}
-                  </Typography>
-                )}
-              </FormControl>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={ativarAoCriar}
-                    onChange={(e) => setAtivarAoCriar(e.target.checked)}
+            <>
+              {!departamentosLoading && departamentos.length === 0 ? (
+                <EmptyState
+                  message="Nenhum departamento cadastrado."
+                  description="Crie um departamento antes de cadastrar colaboradores."
+                  action={
+                    <AppButton
+                      variant="contained"
+                      onClick={() => navigate('/departamentos/novo')}
+                    >
+                      Criar departamento
+                    </AppButton>
+                  }
+                />
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                  <TextField
+                    label="Nome"
+                    value={nomeColaborador}
+                    onChange={(e) => {
+                      setNomeColaborador(e.target.value);
+                      if (errors.nome) setErrors((prev) => ({ ...prev, nome: undefined }));
+                    }}
+                    fullWidth
+                    variant="outlined"
+                    required
+                    error={!!errors.nome}
+                    helperText={errors.nome}
                   />
-                }
-                label="Ativar ao criar"
-                sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
-              />
-            </Box>
+                  <TextField
+                    label="E-mail"
+                    placeholder="e.g. john@gmail.com"
+                    value={emailColaborador}
+                    onChange={(e) => {
+                      setEmailColaborador(e.target.value);
+                      if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
+                    fullWidth
+                    variant="outlined"
+                    type="email"
+                    required
+                    error={!!errors.email}
+                    helperText={errors.email}
+                  />
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    required
+                    error={!!errors.departamento}
+                    disabled={departamentosLoading || departamentos.length === 0}
+                  >
+                    <InputLabel id="departamento-label" shrink>
+                      Departamento
+                    </InputLabel>
+                    <Select
+                      labelId="departamento-label"
+                      value={departamentoColaborador}
+                      label="Departamento"
+                      onChange={(e) => {
+                        setDepartamentoColaborador(e.target.value);
+                        if (errors.departamento)
+                          setErrors((prev) => ({ ...prev, departamento: undefined }));
+                      }}
+                      displayEmpty
+                      renderValue={(selected) => {
+                        if (departamentosLoading) return 'Carregando...';
+                        if (departamentos.length === 0)
+                          return 'Nenhum departamento cadastrado';
+                        return (selected as string) || 'Selecione um departamento';
+                      }}
+                      sx={{
+                        bgcolor: states.input.backgroundMuted,
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: states.input.borderDefault,
+                        },
+                      }}
+                    >
+                      {departamentos.map((d) => (
+                        <MenuItem key={d.id} value={d.nome}>
+                          {d.nome}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {errors.departamento && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                        {errors.departamento}
+                      </Typography>
+                    )}
+                    {!departamentosLoading && departamentos.length === 0 && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 0.5, ml: 1.75 }}
+                      >
+                        Nenhum departamento cadastrado. Crie um departamento antes de cadastrar
+                        colaboradores.
+                      </Typography>
+                    )}
+                  </FormControl>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={ativarAoCriar}
+                        onChange={(e) => setAtivarAoCriar(e.target.checked)}
+                      />
+                    }
+                    label="Ativar ao criar"
+                    sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
+                  />
+                </Box>
+              )}
+            </>
           )}
 
           {activeStep === 1 && (
@@ -468,6 +530,10 @@ export function NovoColaborador() {
             variant="contained"
             onClick={handleNext}
             loading={submitting}
+            disabled={
+              (activeStep === 0 && (departamentosLoading || departamentos.length === 0)) ||
+              (activeStep === 1 && departamentos.length === 0)
+            }
           >
             {activeStep === STEPS.length - 1 ? 'Criar colaborador' : 'Próximo'}
           </AppButton>

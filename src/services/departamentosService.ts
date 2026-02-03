@@ -20,7 +20,9 @@ function toDepartamento(dto: DepartamentoDTO): Departamento {
 function toCriarDTO(input: CreateDepartamentoInput): CriarDepartamentoDTO {
   return {
     nome: input.nome,
-    gestorResponsavelId: input.gestorResponsavelId,
+    ...(input.gestorResponsavelId !== undefined && input.gestorResponsavelId.trim() !== '' && {
+      gestorResponsavelId: input.gestorResponsavelId.trim(),
+    }),
     colaboradoresIds: input.colaboradoresIds ?? [],
     ...(input.descricao !== undefined && { descricao: input.descricao }),
     ...(input.sigla !== undefined && { sigla: input.sigla }),

@@ -41,7 +41,6 @@ export function EditarDepartamento() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
     nome?: string;
-    gestorResponsavelId?: string;
     destinoRemovidos?: string;
   }>({});
   const [toastOpen, setToastOpen] = useState(false);
@@ -102,9 +101,8 @@ export function EditarDepartamento() {
   }, [departamento, outrosDepartamentos, departamentoDestinoRemovidos]);
 
   const validate = (): boolean => {
-    const next: { nome?: string; gestorResponsavelId?: string; destinoRemovidos?: string } = {};
+    const next: { nome?: string; destinoRemovidos?: string } = {};
     if (!nome.trim()) next.nome = 'Nome é obrigatório';
-    if (!gestorResponsavelId.trim()) next.gestorResponsavelId = 'Selecione o gestor responsável';
     if (colaboradoresRemovidosCount > 0 && outrosDepartamentos.length === 0) {
       next.destinoRemovidos = 'Cadastre outro departamento para transferir os colaboradores removidos.';
     }
@@ -221,8 +219,6 @@ export function EditarDepartamento() {
         <FormControl
           fullWidth
           variant="outlined"
-          required
-          error={!!errors.gestorResponsavelId}
           disabled={loading}
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -232,38 +228,32 @@ export function EditarDepartamento() {
           }}
         >
           <InputLabel id="gestor-edit-label" shrink>
-            Gestor responsável
+            Gestor responsável (opcional)
           </InputLabel>
           <Select
             labelId="gestor-edit-label"
             value={gestorResponsavelId}
-            label="Gestor responsável"
-            onChange={(e) => {
-              setGestorResponsavelId(e.target.value);
-              if (errors.gestorResponsavelId)
-                setErrors((p) => ({ ...p, gestorResponsavelId: undefined }));
-            }}
+            label="Gestor responsável (opcional)"
+            onChange={(e) => setGestorResponsavelId(e.target.value)}
             displayEmpty
             renderValue={(v) => {
               if (!v)
                 return gestores.length === 0
                   ? 'Nenhum gestor cadastrado'
-                  : 'Selecione o gestor responsável';
+                  : 'Nenhum';
               const g = gestores.find((c) => c.id === v);
               return g ? g.nome : v;
             }}
           >
+            <MenuItem value="">
+              <em>Nenhum</em>
+            </MenuItem>
             {gestores.map((g) => (
               <MenuItem key={g.id} value={g.id}>
                 {g.nome}
               </MenuItem>
             ))}
           </Select>
-          {errors.gestorResponsavelId && (
-            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-              {errors.gestorResponsavelId}
-            </Typography>
-          )}
           {gestores.length === 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
               Cadastre colaboradores com nível &quot;Gestor&quot; para poder selecioná-los aqui.

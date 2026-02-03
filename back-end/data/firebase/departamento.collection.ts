@@ -90,7 +90,7 @@ export class DepartamentoRepositoryFirestore implements DepartamentoRepository {
       const departamentosRef = getDepartamentosRef();
       const payload: DepartamentoFirestore = {
         nome: dto.nome,
-        gestorResponsavelId: dto.gestorResponsavelId,
+        gestorResponsavelId: dto.gestorResponsavelId ?? '',
         colaboradoresIds: dto.colaboradoresIds ?? [],
         ...(dto.descricao !== undefined && dto.descricao.trim() !== '' && { descricao: dto.descricao.trim() }),
         ...(dto.sigla !== undefined && dto.sigla.trim() !== '' && { sigla: dto.sigla.trim() }),
@@ -99,7 +99,7 @@ export class DepartamentoRepositoryFirestore implements DepartamentoRepository {
       return {
         id: docRef.id,
         nome: dto.nome,
-        gestorResponsavelId: dto.gestorResponsavelId,
+        gestorResponsavelId: dto.gestorResponsavelId ?? '',
         colaboradoresIds: dto.colaboradoresIds ?? [],
         ...(dto.descricao !== undefined && { descricao: dto.descricao }),
         ...(dto.sigla !== undefined && { sigla: dto.sigla }),

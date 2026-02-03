@@ -28,7 +28,7 @@ export function NovoDepartamento() {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [colaboradoresLoading, setColaboradoresLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ nome?: string; gestorResponsavelId?: string }>({});
+  const [errors, setErrors] = useState<{ nome?: string }>({});
   const [toastOpen, setToastOpen] = useState(false);
 
   const gestores = colaboradores.filter((c) => c.nivelHierarquico === 'gestor');
@@ -42,9 +42,8 @@ export function NovoDepartamento() {
   }, []);
 
   const validate = (): boolean => {
-    const next: { nome?: string; gestorResponsavelId?: string } = {};
+    const next: { nome?: string } = {};
     if (!nome.trim()) next.nome = 'Nome é obrigatório';
-    if (!gestorResponsavelId.trim()) next.gestorResponsavelId = 'Selecione o gestor responsável';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -53,7 +52,7 @@ export function NovoDepartamento() {
     if (!validate()) return;
     const input: CreateDepartamentoInput = {
       nome: nome.trim(),
-      gestorResponsavelId: gestorResponsavelId.trim(),
+      ...(gestorResponsavelId.trim() && { gestorResponsavelId: gestorResponsavelId.trim() }),
       colaboradoresIds: colaboradoresSelecionados.map((c) => c.id),
     };
     setSubmitting(true);
@@ -117,8 +116,6 @@ export function NovoDepartamento() {
         <FormControl
           fullWidth
           variant="outlined"
-          required
-          error={!!errors.gestorResponsavelId}
           disabled={colaboradoresLoading}
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -128,39 +125,33 @@ export function NovoDepartamento() {
           }}
         >
           <InputLabel id="gestor-dep-label" shrink>
-            Gestor responsável
+            Gestor responsável (opcional)
           </InputLabel>
           <Select
             labelId="gestor-dep-label"
             value={gestorResponsavelId}
-            label="Gestor responsável"
-            onChange={(e) => {
-              setGestorResponsavelId(e.target.value);
-              if (errors.gestorResponsavelId)
-                setErrors((p) => ({ ...p, gestorResponsavelId: undefined }));
-            }}
+            label="Gestor responsável (opcional)"
+            onChange={(e) => setGestorResponsavelId(e.target.value)}
             displayEmpty
             renderValue={(v) => {
               if (colaboradoresLoading) return 'Carregando...';
               if (!v)
                 return gestores.length === 0
                   ? 'Nenhum gestor cadastrado'
-                  : 'Selecione o gestor responsável';
+                  : 'Nenhum';
               const g = gestores.find((c) => c.id === v);
               return g ? g.nome : v;
             }}
           >
+            <MenuItem value="">
+              <em>Nenhum</em>
+            </MenuItem>
             {gestores.map((g) => (
               <MenuItem key={g.id} value={g.id}>
                 {g.nome}
               </MenuItem>
             ))}
           </Select>
-          {errors.gestorResponsavelId && (
-            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-              {errors.gestorResponsavelId}
-            </Typography>
-          )}
           {!colaboradoresLoading && gestores.length === 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
               Cadastre colaboradores com nível &quot;Gestor&quot; para poder selecioná-los aqui.

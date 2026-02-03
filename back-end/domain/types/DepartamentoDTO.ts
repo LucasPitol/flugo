@@ -10,7 +10,8 @@ export interface DepartamentoDTO {
 
 export interface CriarDepartamentoDTO {
   nome: string;
-  gestorResponsavelId: string;
+  /** Opcional: departamento não é obrigado a ter gestor. */
+  gestorResponsavelId?: string;
   colaboradoresIds: string[];
   descricao?: string;
   sigla?: string;

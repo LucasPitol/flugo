@@ -16,7 +16,8 @@ export interface Departamento {
 /** Input para criação de departamento. */
 export interface CreateDepartamentoInput {
   nome: string;
-  gestorResponsavelId: string;
+  /** Opcional: departamento não é obrigado a ter gestor. */
+  gestorResponsavelId?: string;
   colaboradoresIds: string[];
   descricao?: string;
   sigla?: string;
