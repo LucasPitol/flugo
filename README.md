@@ -52,7 +52,6 @@ O build sai em `dist/`. O preview serve o build localmente.
 - **Colaboradores** (`/colaboradores`): listagem em tabela com ordenação por nome, e-mail, departamento ou status; chips de status (Ativo/Inativo); **Filtros** (drawer com nome, e-mail, departamento; efetivados ao clicar em "Aplicar filtros" — departamento vai para query no Firestore, nome/e-mail filtrados localmente; "Limpar" zera e refaz fetch); botão “Novo colaborador”; quando há seleção, o header mostra “X selecionados” e “Excluir selecionados” (botão “Novo” e “Filtros” ficam ocultos). Botão “Editar” por linha abre **drawer de edição** (dados básicos + campos profissionais; Salvar / Excluir). Exclusão em massa via seleção e diálogo de confirmação.
 - **Novo colaborador** (`/colaboradores/novo`): formulário em etapas (Infos Básicas → Infos Profissionais). Etapa 1: nome, e-mail, departamento, ativar ao criar. Etapa 2: cargo, data de admissão, nível hierárquico, gestor responsável (quando nível ≠ gestor), salário base (máscara BR); validação com Zod; persistência no Firestore.
 - **Departamentos** (`/departamentos`): listagem em tabela (nome, gestor responsável opcional, nº de colaboradores); Novo departamento; Editar departamento (nome, gestor opcional, colaboradores vinculados; adicionar/remover com destino obrigatório para removidos). Transferência de colaboradores entre departamentos (pela edição do departamento ou pela edição do colaborador). Exclusão só permitida quando não há colaboradores vinculados.
-- **404** (`/404`): página não encontrada.
 
 ## Arquitetura (front × back)
 
@@ -73,28 +72,6 @@ O build sai em `dist/`. O preview serve o build localmente.
 
 - O **gestor responsável** do departamento é **opcional**: quando informado, é um colaborador com `nivelHierarquico === 'gestor'`. O departamento não é obrigado a ter gestor.
 - **Colaborador** possui campo `departamento` (string = nome do departamento). **Todo colaborador deve estar vinculado a um departamento** (não pode ficar sem). A consistência entre `colaborador.departamento` e `departamento.colaboradoresIds` é mantida em toda escrita (ver estratégia abaixo).
-
-**Regras de integridade**
-
-1. **Colaborador não pode existir sem departamento.** Todo colaborador deve ter `departamento` preenchido e pertencer a exatamente um departamento na lista `colaboradoresIds` desse departamento.
-2. **Exclusão de departamento:** só é permitida quando `colaboradoresIds` está vazio. Caso contrário, a UI bloqueia (diálogo "Exclusão não permitida") e o usuário é orientado a transferir ou remover colaboradores antes.
-3. **Remoção de colaborador de um departamento (na edição do departamento):** exige **seleção obrigatória do departamento de destino**. A UI não permite salvar com removidos e destino vazio; o service também valida e lança erro se destino estiver vazio.
-
-**Estratégia de transferência (fluxos bidirecionais)**
-
-Toda alteração que move um colaborador de um departamento a outro atualiza **os dois lados** para manter a consistência:
-
-- **Ao adicionar colaborador a um departamento** (criar ou editar departamento):  
-  O colaborador passa a ter `departamento` = nome do novo departamento; o **departamento anterior** tem o ID do colaborador removido de `colaboradoresIds`. Assim, nenhum departamento “antigo” fica com referência órfã.
-- **Ao remover colaborador de um departamento** (editar departamento):  
-  O usuário escolhe o **departamento de destino**; o colaborador tem `departamento` atualizado para o destino e o departamento destino ganha o ID em `colaboradoresIds`. Não há estado “colaborador sem departamento”.
-- **Ao trocar departamento na edição do colaborador:**  
-  O service de sincronização (`colaboradorDepartamentoSync`) atualiza o departamento antigo (remove o ID de `colaboradoresIds`), o novo departamento (adiciona o ID) e o colaborador (`departamento` = nome do novo). Uma única operação atômica na aplicação, com rollback em caso de falha.
-
-A lógica de transferência e rollback está concentrada em:
-
-- `departamentosService`: `criarDepartamentoEAtualizarColaboradores`, `updateDepartamentoEAtualizarColaboradores` (remover do antigo, atualizar colaborador, adicionar no novo; rollback em erro).
-- `colaboradorDepartamentoSync`: `updateColaboradorESincronizarDepartamentos` (usado na edição do colaborador quando o departamento muda).
 
 ### Filtros híbridos (Colaboradores)
 
