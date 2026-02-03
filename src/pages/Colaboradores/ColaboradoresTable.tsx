@@ -13,6 +13,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { AppCard, EmptyState, AppButton, StatusChip } from '../../components/ui';
 import { colors, typography } from '../../theme';
 import type { Colaborador } from '../../services/colaboradores/types';
@@ -178,9 +179,10 @@ export function ColaboradoresTable({
                     <AppButton
                       variant="text"
                       size="small"
+                      startIcon={<VisibilityIcon />}
                       onClick={() => onEditRow(row)}
                     >
-                      Editar
+                      Detalhes
                     </AppButton>
                   </TableCell>
                 </TableRow>

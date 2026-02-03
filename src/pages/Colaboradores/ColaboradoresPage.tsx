@@ -74,6 +74,7 @@ export function ColaboradoresPage() {
     setEditErrors,
     editSubmitting,
     handleEditSubmit,
+    resetEditFormToColaborador,
     confirmSingleDeleteOpen,
     openConfirmSingleDelete,
     closeConfirmSingleDelete,
@@ -267,6 +268,7 @@ export function ColaboradoresPage() {
           if (editErrors.salarioBase) setEditErrors((p) => ({ ...p, salarioBase: undefined }));
         }}
         onSave={handleEditSubmit}
+        onCancelEdit={resetEditFormToColaborador}
         onDeleteClick={openConfirmSingleDelete}
         confirmSingleDeleteOpen={confirmSingleDeleteOpen}
         deletingSingle={deletingSingle}

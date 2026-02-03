@@ -25,7 +25,7 @@ describe('ColaboradoresTable', () => {
     ).toBeInTheDocument();
   });
 
-  it('renderiza tabela com dados e StatusChip correto', () => {
+  it('renderiza tabela com dados e botão Detalhes na ação', () => {
     renderWithRouter(
       <ColaboradoresTable
         {...baseProps}
@@ -45,5 +45,6 @@ describe('ColaboradoresTable', () => {
     expect(screen.getByText('ana@empresa.com')).toBeInTheDocument();
     expect(screen.getByText('TI')).toBeInTheDocument();
     expect(screen.getByText('Ativo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Detalhes' })).toBeInTheDocument();
   });
 });

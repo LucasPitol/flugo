@@ -6,12 +6,12 @@ import { renderWithRouter } from '../../test/test-utils';
 const mockListarDepartamentos = vi.fn();
 const mockListarColaboradores = vi.fn();
 const mockDeleteDepartamento = vi.fn();
-const mockToUserMessage = vi.fn(() => 'Erro');
+const mockToUserMessage = vi.fn((_err: unknown) => 'Erro');
 
 vi.mock('../../services/departamentosService', () => ({
   listarDepartamentos: (...args: unknown[]) => mockListarDepartamentos(...args),
   deleteDepartamento: (...args: unknown[]) => mockDeleteDepartamento(...args),
-  toUserMessage: (...args: unknown[]) => mockToUserMessage(...args),
+  toUserMessage: (err: unknown) => mockToUserMessage(err),
 }));
 
 vi.mock('../../services/colaboradoresService', () => ({

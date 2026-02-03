@@ -21,9 +21,13 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
+import { useEffect, useState } from 'react';
 import { AppButton } from '../../components/ui';
-import { colors, states } from '../../theme';
+import { colors, states, typography } from '../../theme';
 import type { Colaborador, NivelHierarquico } from '../../services/colaboradores/types';
+import { formatBrCurrency } from '../../utils/formatBr';
+
+export type DrawerMode = 'view' | 'edit';
 
 const NIVEIS_HIERARQUICOS: { value: NivelHierarquico; label: string }[] = [
   { value: 'junior', label: 'Júnior' },
@@ -74,6 +78,8 @@ export type ColaboradorEditDrawerProps = {
   onGestorIdChange: (value: string) => void;
   onSalarioBaseChange: (value: string) => void;
   onSave: () => void;
+  /** Chamado ao cancelar edição: descarta alterações e volta para modo detalhes. */
+  onCancelEdit: () => void;
   onDeleteClick: () => void;
   confirmSingleDeleteOpen: boolean;
   deletingSingle: boolean;
@@ -108,6 +114,7 @@ export function ColaboradorEditDrawer({
   onGestorIdChange,
   onSalarioBaseChange,
   onSave,
+  onCancelEdit,
   onDeleteClick,
   confirmSingleDeleteOpen,
   deletingSingle,
@@ -115,11 +122,100 @@ export function ColaboradorEditDrawer({
   onConfirmSingleDelete,
   colaborador,
 }: ColaboradorEditDrawerProps) {
+  const [mode, setMode] = useState<DrawerMode>('view');
+
+  useEffect(() => {
+    if (open) setMode('view');
+  }, [open]);
+
   const departamentoNomes = departamentos.map((d) => d.nome);
   const optionsIncluindoAtual =
     departamento && !departamentoNomes.includes(departamento)
       ? [departamento, ...departamentoNomes]
       : departamentoNomes;
+
+  const dataAdmissaoFormatada =
+    dataAdmissao ? dayjs(dataAdmissao, 'YYYY-MM-DD').format('DD/MM/YYYY') : '—';
+  const nivelLabel =
+    nivelHierarquico ? NIVEIS_HIERARQUICOS.find((n) => n.value === nivelHierarquico)?.label ?? nivelHierarquico : '—';
+  const gestorNome = gestorId ? gestores.find((g) => g.id === gestorId)?.nome ?? '—' : '—';
+  const salarioExibicao =
+    colaborador?.salarioBase != null ? formatBrCurrency(colaborador.salarioBase) : '—';
+
+  const detailRow = (label: string, value: string) => (
+    <Box sx={{ mb: 2.5 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          display: 'block',
+          fontWeight: typography.fontWeight.medium,
+          fontSize: typography.fontSize.xs,
+          mb: 0.5,
+          textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          color: colors.neutral.text,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.regular,
+          lineHeight: 1.5,
+        }}
+      >
+        {value || '—'}
+      </Typography>
+    </Box>
+  );
+
+  const detailsContent = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, flex: 1 }}>
+      <Box sx={{ pb: 2, borderBottom: `1px solid ${colors.neutral.border}` }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: colors.neutral.textSecondary,
+            fontWeight: typography.fontWeight.semibold,
+            fontSize: typography.fontSize.xs,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            mb: 2,
+          }}
+        >
+          Dados básicos
+        </Typography>
+        {detailRow('Nome', nome)}
+        {detailRow('E-mail', email)}
+        {detailRow('Departamento', departamento)}
+        {detailRow('Status', status)}
+      </Box>
+      <Box>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: colors.neutral.textSecondary,
+            fontWeight: typography.fontWeight.semibold,
+            fontSize: typography.fontSize.xs,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            mb: 2,
+          }}
+        >
+          Infos profissionais
+        </Typography>
+        {detailRow('Cargo', cargo)}
+        {detailRow('Data de admissão', dataAdmissaoFormatada)}
+        {detailRow('Nível hierárquico', nivelLabel)}
+        {nivelHierarquico && nivelHierarquico !== 'gestor' && detailRow('Gestor responsável', gestorNome)}
+        {detailRow('Salário base', salarioExibicao ? `R$ ${salarioExibicao}` : '—')}
+      </Box>
+    </Box>
+  );
+
   return (
     <>
       <Drawer
@@ -132,8 +228,11 @@ export function ColaboradorEditDrawer({
       >
         <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }}>
           <Typography variant="h6" sx={{ mb: 3 }}>
-            Editar colaborador
+            {mode === 'view' ? 'Detalhes do colaborador' : 'Editar colaborador'}
           </Typography>
+          {mode === 'view' ? (
+            detailsContent
+          ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, flex: 1 }}>
             <TextField
               label="Nome"
@@ -333,6 +432,7 @@ export function ColaboradorEditDrawer({
               sx={{ '& .MuiFormControlLabel-label': { color: colors.neutral.text } }}
             />
           </Box>
+          )}
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between', mt: 3 }}>
             <AppButton
               variant="text"
@@ -343,12 +443,32 @@ export function ColaboradorEditDrawer({
               Excluir
             </AppButton>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <AppButton variant="text" onClick={onClose} disabled={submitting}>
-                Cancelar
-              </AppButton>
-              <AppButton variant="contained" onClick={onSave} loading={submitting}>
-                Salvar
-              </AppButton>
+              {mode === 'view' ? (
+                <>
+                  <AppButton variant="text" onClick={onClose}>
+                    Fechar
+                  </AppButton>
+                  <AppButton variant="contained" onClick={() => setMode('edit')}>
+                    Editar
+                  </AppButton>
+                </>
+              ) : (
+                <>
+                  <AppButton
+                    variant="text"
+                    onClick={() => {
+                      onCancelEdit();
+                      setMode('view');
+                    }}
+                    disabled={submitting}
+                  >
+                    Cancelar
+                  </AppButton>
+                  <AppButton variant="contained" onClick={onSave} loading={submitting}>
+                    Salvar
+                  </AppButton>
+                </>
+              )}
             </Box>
           </Box>
         </Box>

@@ -235,6 +235,23 @@ export function useColaboradores() {
     }
   }, [editingColaborador]);
 
+  /** Reseta o formulário de edição para os dados persistidos do colaborador (ex.: ao cancelar edição). */
+  const resetEditFormToColaborador = useCallback(() => {
+    if (!editingColaborador) return;
+    setEditNome(editingColaborador.nome);
+    setEditEmail(editingColaborador.email);
+    setEditDepartamento(editingColaborador.departamento);
+    setEditStatus(editingColaborador.status);
+    setEditCargo(editingColaborador.cargo ?? '');
+    setEditDataAdmissao(editingColaborador.dataAdmissao ?? '');
+    setEditNivelHierarquico(editingColaborador.nivelHierarquico ?? '');
+    setEditGestorId(editingColaborador.gestorId ?? '');
+    setEditSalarioBase(
+      editingColaborador.salarioBase != null ? formatBrCurrency(editingColaborador.salarioBase) : ''
+    );
+    setEditErrors({});
+  }, [editingColaborador]);
+
   const openEdit = useCallback((row: Colaborador) => {
     setEditingColaborador(row);
   }, []);
@@ -394,6 +411,7 @@ export function useColaboradores() {
     setEditErrors,
     editSubmitting,
     handleEditSubmit,
+    resetEditFormToColaborador,
 
     // Exclusão única (no drawer)
     confirmSingleDeleteOpen,

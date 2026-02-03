@@ -19,7 +19,7 @@ vi.mock('../../services/colaboradoresService', () => ({
   bulkDeleteColaboradores: (...args: unknown[]) => mockBulkDelete(...args),
   updateColaborador: (...args: unknown[]) => mockUpdateColaborador(...args),
   deleteColaborador: (...args: unknown[]) => mockDeleteColaborador(...args),
-  toUserMessage: (...args: unknown[]) => mockToUserMessage(...args),
+  toUserMessage: (err: unknown) => mockToUserMessage(err),
 }));
 
 vi.mock('../../services/departamentosService', () => ({
@@ -40,6 +40,10 @@ const colaboradores = [
     email: 'ana@empresa.com',
     departamento: 'TI',
     status: 'Ativo' as const,
+    cargo: 'Desenvolvedora',
+    dataAdmissao: '2023-01-15',
+    nivelHierarquico: 'pleno' as const,
+    salarioBase: 5000,
   },
   {
     id: 'c2',
@@ -155,5 +159,117 @@ describe('ColaboradoresPage (widget)', () => {
     expect(
       await screen.findByText('2 colaboradores excluídos.')
     ).toBeInTheDocument();
+  });
+
+  describe('drawer detalhes e edição', () => {
+    it('abre drawer em modo detalhes (leitura)', async () => {
+      mockListarColaboradores.mockResolvedValueOnce(colaboradores);
+
+      renderWithRouter(<ColaboradoresPage />, {
+        route: '/colaboradores',
+        path: '/colaboradores',
+      });
+
+      expect(await screen.findByText('Ana')).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      const detalhesButtons = screen.getAllByRole('button', { name: 'Detalhes' });
+      await user.click(detalhesButtons[0]);
+
+      const drawerPanel = await screen.findByRole('dialog');
+      expect(within(drawerPanel).getByRole('heading', { name: 'Detalhes do colaborador' })).toBeInTheDocument();
+      expect(within(drawerPanel).getByText('Dados básicos')).toBeInTheDocument();
+      expect(within(drawerPanel).getByText('Infos profissionais')).toBeInTheDocument();
+      expect(within(drawerPanel).getByText('Ana')).toBeInTheDocument();
+      expect(within(drawerPanel).getByText('ana@empresa.com')).toBeInTheDocument();
+      expect(within(drawerPanel).getByRole('button', { name: 'Editar' })).toBeInTheDocument();
+      expect(within(drawerPanel).getByRole('button', { name: 'Excluir' })).toBeInTheDocument();
+      expect(within(drawerPanel).queryByRole('textbox', { name: /Nome/i })).not.toBeInTheDocument();
+    });
+
+    it('ao clicar em Editar, exibe formulário de edição', async () => {
+      mockListarColaboradores.mockResolvedValueOnce(colaboradores);
+
+      renderWithRouter(<ColaboradoresPage />, {
+        route: '/colaboradores',
+        path: '/colaboradores',
+      });
+
+      expect(await screen.findByText('Ana')).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      const detalhesButtons = screen.getAllByRole('button', { name: 'Detalhes' });
+      await user.click(detalhesButtons[0]);
+
+      const drawerPanel = await screen.findByRole('dialog');
+      await user.click(within(drawerPanel).getByRole('button', { name: 'Editar' }));
+
+      const editPanel = screen.getByRole('dialog');
+      expect(within(editPanel).getByRole('heading', { name: 'Editar colaborador' })).toBeInTheDocument();
+      expect(within(editPanel).getByRole('textbox', { name: /Nome/i })).toBeInTheDocument();
+      expect(within(editPanel).getByRole('textbox', { name: /E-mail/i })).toBeInTheDocument();
+      expect(within(editPanel).getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+      expect(within(editPanel).getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+    });
+
+    it('ao cancelar edição, volta para modo detalhes', async () => {
+      mockListarColaboradores.mockResolvedValueOnce(colaboradores);
+
+      renderWithRouter(<ColaboradoresPage />, {
+        route: '/colaboradores',
+        path: '/colaboradores',
+      });
+
+      expect(await screen.findByText('Ana')).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      const detalhesButtons = screen.getAllByRole('button', { name: 'Detalhes' });
+      await user.click(detalhesButtons[0]);
+
+      const drawerPanel = await screen.findByRole('dialog');
+      await user.click(within(drawerPanel).getByRole('button', { name: 'Editar' }));
+
+      const editPanel = screen.getByRole('dialog');
+      const nomeInput = within(editPanel).getByRole('textbox', { name: /Nome/i });
+      await user.clear(nomeInput);
+      await user.type(nomeInput, 'Nome alterado');
+
+      await user.click(within(editPanel).getByRole('button', { name: 'Cancelar' }));
+
+      const detailsPanel = screen.getByRole('dialog');
+      expect(within(detailsPanel).getByRole('heading', { name: 'Detalhes do colaborador' })).toBeInTheDocument();
+      expect(within(detailsPanel).getByText('Ana')).toBeInTheDocument();
+      expect(within(detailsPanel).queryByRole('textbox', { name: /Nome/i })).not.toBeInTheDocument();
+    });
+
+    it('excluir colaborador funciona a partir do drawer (modo detalhes)', async () => {
+      mockListarColaboradores
+        .mockResolvedValueOnce(colaboradores)
+        .mockResolvedValueOnce([]);
+      mockDeleteColaborador.mockResolvedValue(undefined);
+
+      renderWithRouter(<ColaboradoresPage />, {
+        route: '/colaboradores',
+        path: '/colaboradores',
+      });
+
+      expect(await screen.findByText('Ana')).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      const detalhesButtons = screen.getAllByRole('button', { name: 'Detalhes' });
+      await user.click(detalhesButtons[0]);
+
+      const drawerPanel = await screen.findByRole('dialog');
+      await user.click(within(drawerPanel).getByRole('button', { name: 'Excluir' }));
+
+      const confirmDialog = await screen.findByRole('dialog', { name: /Excluir colaborador/i });
+      expect(within(confirmDialog).getByText(/Excluir Ana\?/)).toBeInTheDocument();
+      await user.click(within(confirmDialog).getByRole('button', { name: 'Excluir' }));
+
+      await waitFor(() => {
+        expect(mockDeleteColaborador).toHaveBeenCalledWith('c1');
+      });
+      expect(await screen.findByText('Colaborador excluído.')).toBeInTheDocument();
+    });
   });
 });
